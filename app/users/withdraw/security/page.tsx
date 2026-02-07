@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
+
 
 function SecurityContent() {
     const router = useRouter();
@@ -46,6 +48,19 @@ function SecurityContent() {
     const [withdrawalSettings, setWithdrawalSettings] = useState<any>({
         frequency: 1,
     });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -129,7 +144,7 @@ function SecurityContent() {
                     await updateDoc(doc(db, "users", user.uid), {
                         withdrawalPassword: input
                     });
-                    toast.success("PIN set successfully");
+                    toast.success(t.pinSetSuccess);
                     setUserData({ ...userData, withdrawalPassword: input });
 
                     const isRecruited = await checkPartnerStatus();
@@ -149,7 +164,7 @@ function SecurityContent() {
                     }
                     await executeWithdrawal();
                 } else {
-                    toast.error("PINs do not match. Please try again.");
+                    toast.error(t.pinMismatch);
                     setInput("");
                     setConfirmInput("");
                     setStep("set");
@@ -174,14 +189,14 @@ function SecurityContent() {
                 } else {
                     setShake(true);
                     setTimeout(() => setShake(false), 500);
-                    setCustomError("Invalid PIN");
+                    setCustomError(t.invalidPin);
                     setInput("");
                     setVerifying(false);
                 }
             }
         } catch (error) {
             console.error(error);
-            toast.error("An error occurred. Please try again.");
+            toast.error(t.noAlerts);
             setVerifying(false);
         }
     };
@@ -283,7 +298,7 @@ function SecurityContent() {
             setVerifying(false);
         } catch (error) {
             console.error(error);
-            toast.error("Request failed");
+            toast.error(t.noAlerts);
             setVerifying(false);
         }
     };
@@ -325,19 +340,21 @@ function SecurityContent() {
 
                             <div className="space-y-4 mb-10">
                                 <h3 className="text-3xl font-bold text-blue-900 leading-none">
-                                    Account<br />Notice
+                                    {t.accountNotice.split(" ")[0]}<br />{t.accountNotice.split(" ").slice(1).join(" ")}
+
                                 </h3>
                                 <p className="text-slate-400 text-sm font-medium leading-relaxed px-4">
-                                    Withdrawals are only available for verified users.
-                                    Please complete your first deposit to verify your account.
+                                    {t.activationDesc}
                                 </p>
+
                             </div>
 
                             <button
                                 onClick={() => router.push(`/users/recharge?amount=${minRecharge}`)}
                                 className="w-full py-6 bg-orange-500 text-white rounded-[2rem] text-sm font-bold shadow-xl shadow-orange-500/20 active:scale-95 transition-all"
                             >
-                                Verify Now
+                                {t.verifyNow}
+
                             </button>
                         </motion.div>
                     </motion.div>
@@ -364,15 +381,17 @@ function SecurityContent() {
                             </div>
 
                             <div className="space-y-4 mb-8">
-                                <h3 className="text-2xl font-bold text-blue-900">Wait Time</h3>
-                                <p className="text-xs font-bold text-orange-600 uppercase tracking-widest">Please try again after:</p>
+                                <h3 className="text-2xl font-bold text-blue-900">{t.waitTime}</h3>
+                                <p className="text-xs font-bold text-orange-600 uppercase tracking-widest">{t.tryAgainAfter}</p>
+
                             </div>
 
                             <div className="flex gap-6 justify-center w-full bg-blue-50/50 py-8 rounded-[2.5rem] border border-blue-50 mb-10">
                                 {[
-                                    { val: timeLeft.hours, label: 'Hrs' },
-                                    { val: timeLeft.minutes, label: 'Min' },
-                                    { val: timeLeft.seconds, label: 'Sec', color: 'text-orange-600' }
+                                    { val: timeLeft.hours, label: t.hours },
+                                    { val: timeLeft.minutes, label: t.minutes },
+                                    { val: timeLeft.seconds, label: t.seconds, color: 'text-orange-600' }
+
                                 ].map((t, i) => (
                                     <div key={i} className="flex flex-col items-center min-w-[60px]">
                                         <span className={`text-3xl font-bold ${t.color || 'text-blue-900'} tabular-nums`}>{t.val.toString().padStart(2, '0')}</span>
@@ -385,7 +404,8 @@ function SecurityContent() {
                                 onClick={() => router.push('/users/welcome')}
                                 className="w-full py-6 bg-blue-900 text-white rounded-[2rem] text-sm font-bold transition-all shadow-xl shadow-blue-900/20"
                             >
-                                Ok
+                                {t.ok}
+
                             </button>
                         </motion.div>
                     </motion.div>
@@ -412,18 +432,20 @@ function SecurityContent() {
                             </div>
 
                             <div className="space-y-4 mb-10">
-                                <h3 className="text-3xl font-bold text-blue-900 leading-none">Request Placed</h3>
+                                <h3 className="text-3xl font-bold text-blue-900 leading-none">{t.requestPlaced}</h3>
                                 <p className="text-slate-400 text-sm font-medium leading-relaxed px-4">
-                                    Your request has been sent for verification. Wait time:<br />
-                                    <span className="text-blue-900 font-bold">2 - 72 Hours</span>
+                                    {t.requestUnderVerification}<br />
+                                    <span className="text-blue-900 font-bold">{t.processingTimeRange}</span>
                                 </p>
                             </div>
+
 
                             <button
                                 onClick={() => router.push('/users/welcome')}
                                 className="w-full py-6 bg-blue-900 text-white rounded-[2rem] text-sm font-bold shadow-xl shadow-blue-900/20 active:scale-95 transition-all"
                             >
-                                Finish
+                                {t.finish}
+
                             </button>
                         </motion.div>
                     </motion.div>
@@ -445,15 +467,17 @@ function SecurityContent() {
             {/* Title & Instructions */}
             <div className="space-y-4 mb-14 max-w-xs mx-auto relative z-10">
                 <h2 className="text-4xl font-bold text-blue-900 tracking-tight leading-none">
-                    {step === "set" ? "Create PIN" : step === "confirm" ? "Verify PIN" : "Enter PIN"}
+                    {step === "set" ? t.createPinTitle : step === "confirm" ? t.verifyPinTitle : t.enterPinTitle}
                 </h2>
+
                 <div className="h-1.5 w-12 bg-blue-600/10 mx-auto rounded-full"></div>
                 <p className="text-sm font-medium text-slate-400 leading-relaxed">
                     {step === "set"
-                        ? "Create a 4-digit PIN for withdrawals."
+                        ? t.setPinDesc
                         : step === "confirm"
-                            ? "Please confirm your new PIN."
-                            : "Enter your PIN to withdraw."}
+                            ? t.confirmPinDesc
+                            : t.enterPinDesc}
+
                 </p>
             </div>
 
@@ -525,7 +549,8 @@ function SecurityContent() {
                     ) : (
                         <>
                             {step === "enter" && <Shield size={18} strokeWidth={2.5} />}
-                            <span>{step === "enter" ? "Confirm Withdrawal" : "Next Step"}</span>
+                            <span>{step === "enter" ? t.confirmWithdrawal : t.next}</span>
+
                         </>
                     )}
                 </button>
@@ -534,7 +559,8 @@ function SecurityContent() {
                     onClick={() => router.back()}
                     className="mt-10 text-[10px] font-bold text-slate-300 uppercase tracking-widest hover:text-blue-900 transition-all text-center w-full"
                 >
-                    Cancel
+                    {t.cancel}
+
                 </button>
             </div>
 

@@ -22,6 +22,7 @@ import {
     Stethoscope
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function FundingDetailsPage() {
     const router = useRouter();
@@ -29,6 +30,19 @@ export default function FundingDetailsPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [products, setProducts] = useState<Record<string, any>>({});
     const [userId, setUserId] = useState<string | null>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -121,7 +135,7 @@ export default function FundingDetailsPage() {
                     >
                         <ChevronLeft size={22} />
                     </button>
-                    <h1 className="text-lg font-bold text-blue-900 leading-none">My Orders</h1>
+                    <h1 className="text-lg font-bold text-blue-900 leading-none">{t.myOrders}</h1>
                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
                         <Activity size={18} />
                     </div>
@@ -140,16 +154,16 @@ export default function FundingDetailsPage() {
                                 <Package size={40} className="text-blue-900/20" />
                             </div>
                             <div className="space-y-2 text-center">
-                                <h3 className="text-2xl font-bold text-blue-900">No Orders Yet</h3>
+                                <h3 className="text-2xl font-bold text-blue-900">{t.noOrdersYet}</h3>
                                 <p className="text-sm text-blue-900/40 leading-relaxed px-6">
-                                    You don't have any orders yet. Start by checking our products.
+                                    {t.noOrdersMsg}
                                 </p>
                             </div>
                             <button
                                 onClick={() => router.push('/users/product')}
                                 className="px-10 py-5 bg-blue-900 text-white rounded-2xl text-base font-bold shadow-xl shadow-blue-900/20 active:scale-95 transition-all"
                             >
-                                View Products
+                                {t.viewProducts}
                             </button>
                         </motion.div>
                     ) : (
@@ -185,12 +199,12 @@ export default function FundingDetailsPage() {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h3 className="text-lg font-bold text-blue-900 truncate pr-4 leading-none">{order.productName}</h3>
                                                     <span className="px-2.5 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100 shadow-sm">
-                                                        Active
+                                                        {t.active}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-blue-900/40 text-[11px] font-medium">
                                                     <Clock size={12} className="shrink-0" />
-                                                    <span>Bought: {formatDate(order.purchaseDate || order.createdAt)}</span>
+                                                    <span>{t.boughtLabel} {formatDate(order.purchaseDate || order.createdAt)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -198,10 +212,10 @@ export default function FundingDetailsPage() {
                                         {/* Stats Grid */}
                                         <div className="grid grid-cols-2 gap-4 relative z-10">
                                             {[
-                                                { label: "Price", val: Number(order.price).toLocaleString(), unit: "ETB", icon: <ShieldCheck size={14} />, color: "text-blue-900" },
-                                                { label: "Daily Income", val: Number(order.dailyIncome).toLocaleString(), unit: "ETB", icon: <TrendingUp size={14} />, color: "text-blue-900" },
-                                                { label: "Total Profit", val: `+${totalProfit.toLocaleString()}`, unit: "ETB", icon: <Coins size={14} />, color: "text-green-600" },
-                                                { label: "Remaining", val: remaining, unit: "Days", icon: <Timer size={14} />, color: "text-blue-600" }
+                                                { label: t.price, val: Number(order.price).toLocaleString(), unit: "ETB", icon: <ShieldCheck size={14} />, color: "text-blue-900" },
+                                                { label: t.dailyIncome, val: Number(order.dailyIncome).toLocaleString(), unit: "ETB", icon: <TrendingUp size={14} />, color: "text-blue-900" },
+                                                { label: t.totalProfit, val: `+${totalProfit.toLocaleString()}`, unit: "ETB", icon: <Coins size={14} />, color: "text-green-600" },
+                                                { label: t.remaining, val: remaining, unit: t.days, icon: <Timer size={14} />, color: "text-blue-600" }
                                             ].map((stat, i) => (
                                                 <div key={i} className="bg-blue-50/30 p-5 rounded-2xl border border-blue-50/50">
                                                     <span className="text-[11px] font-bold text-blue-900/30 flex items-center gap-2 mb-2">
@@ -218,7 +232,7 @@ export default function FundingDetailsPage() {
                                         <div className="space-y-4 relative z-10 pt-4 border-t border-blue-50">
                                             <div className="flex justify-between items-center px-1">
                                                 <span className="text-[11px] font-bold text-blue-900/30 flex items-center gap-2">
-                                                    <Zap size={14} className="text-orange-500" /> Progress
+                                                    <Zap size={14} className="text-orange-500" /> {t.progressLabel}
                                                 </span>
                                                 <span className="text-xs font-bold text-blue-900">{Math.round(progress)}%</span>
                                             </div>
@@ -243,7 +257,7 @@ export default function FundingDetailsPage() {
 
             {/* Stealth Logistics */}
             <div className="fixed bottom-10 left-0 right-0 flex justify-center pointer-events-none opacity-10 z-0">
-                <span className="text-[10px] font-semibold text-blue-900">Your Investment details</span>
+                <span className="text-[10px] font-semibold text-blue-900">{t.investmentDetailsFoot}</span>
             </div>
         </div>
     );

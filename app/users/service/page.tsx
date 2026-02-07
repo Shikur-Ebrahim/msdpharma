@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { ChevronLeft, MessageCircle, ExternalLink, ShieldCheck, Loader2, Headphones, BellRing, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function ServicePage() {
     const router = useRouter();
@@ -15,6 +16,19 @@ export default function ServicePage() {
         channelLink: "",
         teamLink: ""
     });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -47,15 +61,15 @@ export default function ServicePage() {
 
     const contactOptions = [
         {
-            title: "Support Team",
-            description: "24/7 support for any questions",
+            title: t.supportTeamTitle,
+            description: t.supportTeamDesc,
             image: "/telegram.jpg",
             link: formatTG(links.teamLink),
             color: "blue"
         },
         {
-            title: "Official Channel",
-            description: "Follow us for news and updates",
+            title: t.officialChannelTitle,
+            description: t.officialChannelDesc,
             image: "/telegram.jpg",
             link: formatTG(links.channelLink),
             color: "green"
@@ -87,8 +101,8 @@ export default function ServicePage() {
                     <ChevronLeft size={22} className="text-blue-900 group-hover:-translate-x-0.5 transition-transform" />
                 </button>
                 <div className="flex flex-col">
-                    <h1 className="text-lg font-bold text-blue-900 leading-none">Customer Support</h1>
-                    <span className="text-[10px] text-blue-900/60 mt-1">Help & Support</span>
+                    <h1 className="text-lg font-bold text-blue-900 leading-none">{t.customerSupport}</h1>
+                    <span className="text-[10px] text-blue-900/60 mt-1">{t.helpAndSupport}</span>
                 </div>
             </header>
 
@@ -106,9 +120,9 @@ export default function ServicePage() {
                         </div>
                     </motion.div>
                     <div className="space-y-3">
-                        <h2 className="text-3xl font-bold text-blue-900 tracking-tight leading-tight">Help Center</h2>
+                        <h2 className="text-3xl font-bold text-blue-900 tracking-tight leading-tight">{t.helpCenter}</h2>
                         <p className="text-sm text-blue-900/40 leading-relaxed max-w-[240px] mx-auto">
-                            Connect with us through our official support channels.
+                            {t.connectWithUs}
                         </p>
                     </div>
                 </div>

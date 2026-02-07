@@ -11,9 +11,8 @@ import {
     Loader2,
     ArrowRight,
     Wallet,
-    ShieldCheck,
-    CreditCard
 } from "lucide-react";
+import { translations, Language } from "@/lib/translations";
 
 function PaymentMethodContent() {
     const router = useRouter();
@@ -23,6 +22,19 @@ function PaymentMethodContent() {
     const [loading, setLoading] = useState(true);
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const q = query(
@@ -44,7 +56,7 @@ function PaymentMethodContent() {
 
     const handleRecharge = () => {
         if (!selectedMethod) {
-            alert("Please select a payment method");
+            alert(t.selectMethodAlert);
             return;
         }
 
@@ -82,7 +94,7 @@ function PaymentMethodContent() {
                 </button>
                 <div className="flex flex-col items-center">
                     <h1 className="text-xl font-bold text-blue-900">
-                        Payment Method
+                        {t.paymentMethod}
                     </h1>
                 </div>
                 <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100">
@@ -96,7 +108,7 @@ function PaymentMethodContent() {
                     <div className="bg-white rounded-[3.5rem] p-12 border border-blue-50 shadow-xl shadow-blue-900/5 relative overflow-hidden text-center">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16"></div>
 
-                        <p className="text-sm font-medium text-slate-400 mb-4">Amount</p>
+                        <p className="text-sm font-medium text-slate-400 mb-4">{t.amountLabel}</p>
                         <div className="flex flex-col items-center gap-2">
                             <span className="text-6xl font-black text-blue-900 tracking-tighter tabular-nums leading-none">
                                 {Number(amount).toLocaleString()}
@@ -111,10 +123,10 @@ function PaymentMethodContent() {
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-4">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-900"></div>
-                            <h2 className="text-sm font-bold text-slate-800">Select Method</h2>
+                            <h2 className="text-sm font-bold text-slate-800">{t.selectMethodLabel}</h2>
                         </div>
                         <div className="px-4 py-1.5 bg-green-500 rounded-full shadow-lg shadow-green-500/20">
-                            <p className="text-[10px] font-bold text-white leading-none">{paymentMethods.length} Available</p>
+                            <p className="text-[10px] font-bold text-white leading-none">{paymentMethods.length} {t.availableLabel}</p>
                         </div>
                     </div>
 
@@ -147,7 +159,7 @@ function PaymentMethodContent() {
                                                 <span className={`text-lg font-bold block leading-tight ${isSelected ? "text-blue-900" : "text-blue-900/60 group-hover:text-blue-900"}`}>
                                                     {method.methodName}
                                                 </span>
-                                                <p className="text-xs text-slate-400 mt-1">Pay with {method.methodName}</p>
+                                                <p className="text-xs text-slate-400 mt-1">{t.payWithDesc.replace("{method}", method.methodName)}</p>
                                             </div>
                                         </div>
 
@@ -167,7 +179,7 @@ function PaymentMethodContent() {
                             <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto border border-blue-100">
                                 <Building2 size={36} className="text-blue-900/20" />
                             </div>
-                            <p className="text-slate-400 text-sm">No payment methods found</p>
+                            <p className="text-slate-400 text-sm">{t.noPaymentMethodsFound}</p>
                         </div>
                     )}
                 </section>
@@ -181,7 +193,7 @@ function PaymentMethodContent() {
                         disabled={!selectedMethod}
                         className="w-full bg-orange-500 text-white h-20 rounded-[2.5rem] font-bold text-lg shadow-2xl shadow-orange-500/20 hover:shadow-orange-600/30 active:scale-95 transition-all duration-500 flex items-center justify-center gap-6 disabled:opacity-30 disabled:grayscale"
                     >
-                        <span>Next Step</span>
+                        <span>{t.nextStep}</span>
                         <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform duration-300" />
                     </button>
                 </div>

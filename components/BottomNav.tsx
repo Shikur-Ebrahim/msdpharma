@@ -7,6 +7,7 @@ import { useEffect, useState, Suspense } from "react";
 import { syncDailyIncome } from "@/lib/sync";
 import { syncWeekendDailyIncome } from "@/lib/weekendSync";
 import { auth } from "@/lib/firebase";
+import { translations, Language } from "@/lib/translations";
 
 function BottomNavContent() {
     const pathname = usePathname();
@@ -14,9 +15,22 @@ function BottomNavContent() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("home");
     const [mounted, setMounted] = useState(false);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
     const isChat = pathname === "/users/chat";
 
     const [userId, setUserId] = useState<string | null>(null);
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -53,11 +67,11 @@ function BottomNavContent() {
     if (!mounted || hideNav) return null;
 
     const navItems = [
-        { id: "home", icon: Home, label: "Clinic", path: "/users/welcome?tab=home" },
-        { id: "weekend", icon: PartyPopper, label: "Weekend", path: "/users/weekend" },
-        { id: "w-page", icon: History, label: "W.Page", path: "/users/weekend-record" },
-        { id: "team", icon: Users, label: "Assisted", path: "/users/team" },
-        { id: "me", icon: Shield, label: "Finance", path: "/users/profile" },
+        { id: "home", icon: Home, label: t.clinic, path: "/users/welcome?tab=home" },
+        { id: "weekend", icon: PartyPopper, label: t.navWeekend, path: "/users/weekend" },
+        { id: "w-page", icon: History, label: t.wPage, path: "/users/weekend-record" },
+        { id: "team", icon: Users, label: t.assisted, path: "/users/team" },
+        { id: "me", icon: Shield, label: t.finance, path: "/users/profile" },
     ];
 
     return (

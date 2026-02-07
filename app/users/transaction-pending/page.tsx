@@ -17,23 +17,37 @@ import {
     Shield
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const LOG_MESSAGES = [
-    "Starting request...",
-    "Connecting to server...",
-    "Validating account...",
-    "Updating status...",
-    "Checking security...",
-    "Verifying details...",
-    "Finalizing process...",
-    "Almost done..."
-];
+import { translations, Language } from "@/lib/translations";
 
 function PendingContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [currentLog, setCurrentLog] = useState(0);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    const LOG_MESSAGES = [
+        t.logStarting,
+        t.logConnecting,
+        t.logValidating,
+        t.logUpdating,
+        t.logChecking,
+        t.logVerifying,
+        t.logFinalizing,
+        t.logAlmostDone
+    ];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -94,7 +108,7 @@ function PendingContent() {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
                 <Loader2 className="animate-spin text-green-600 w-12 h-12" strokeWidth={2.5} />
-                <span className="text-blue-900/40 font-bold text-sm animate-pulse">Starting...</span>
+                <span className="text-blue-900/40 font-bold text-sm animate-pulse">{t.startingLabel}</span>
             </div>
         );
     }
@@ -117,8 +131,8 @@ function PendingContent() {
                         <ChevronLeft size={22} />
                     </button>
                     <div className="flex flex-col">
-                        <h1 className="text-lg font-bold text-blue-900 leading-none">Processing</h1>
-                        <span className="text-[10px] text-blue-900/40 mt-1">Verification in progress</span>
+                        <h1 className="text-lg font-bold text-blue-900 leading-none">{t.processing}</h1>
+                        <span className="text-[10px] text-blue-900/40 mt-1">{t.verificationInProgress}</span>
                     </div>
                 </div>
                 <div className="px-5 py-2.5 rounded-2xl bg-blue-900 text-[11px] font-bold text-white shadow-xl flex items-center gap-3">
@@ -152,9 +166,9 @@ function PendingContent() {
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="flex items-center gap-3">
                                         <Loader2 size={16} className="animate-spin text-blue-600" strokeWidth={3} />
-                                        <span className="text-[11px] font-bold text-blue-900">Processing</span>
+                                        <span className="text-[11px] font-bold text-blue-900">{t.processing}</span>
                                     </div>
-                                    <span className="text-[10px] font-mono font-medium text-blue-900/20">Session: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+                                    <span className="text-[10px] font-mono font-medium text-blue-900/20">{t.sessionLabel}: {Math.random().toString(36).substring(7).toUpperCase()}</span>
                                 </div>
                             </div>
 
@@ -174,18 +188,19 @@ function PendingContent() {
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce delay-200"></span>
                             </div>
                             <span className="text-[11px] font-bold text-blue-900">
-                                {searchParams.get('type') === 'withdrawal' ? 'Pending Approval' : 'Under Review'}
+                                {searchParams.get('type') === 'withdrawal' ? t.pendingApproval : t.underReview}
                             </span>
                         </div>
 
                         <h1 className="text-4xl font-bold text-blue-900 tracking-tight leading-none">
-                            Request <br />
-                            <span className="text-orange-500">Processing</span>
+                            {t.requestProcessing.split(' ')[0]} <br />
+                            <span className="text-orange-500">{t.requestProcessing.split(' ')[1]}</span>
                         </h1>
 
                         <p className="text-[13px] font-medium text-blue-900/40 max-w-[280px] mx-auto leading-relaxed">
-                            We are processing your request. Please wait.
-                            Estimated time: <span className="text-blue-900 underline underline-offset-4 decoration-2">5-15 mins</span>
+                            {t.processingWaitMsg}
+                            <br />
+                            {t.estimatedTime}: <span className="text-blue-900 underline underline-offset-4 decoration-2">5-15 mins</span>
                         </p>
                     </div>
 
@@ -199,7 +214,7 @@ function PendingContent() {
                             <div className="p-3 rounded-2xl bg-blue-100 border border-blue-200 text-blue-600 shadow-sm">
                                 <Cpu size={22} strokeWidth={2.5} />
                             </div>
-                            <h3 className="text-[11px] font-bold text-blue-900/60">System Diagnostics</h3>
+                            <h3 className="text-[11px] font-bold text-blue-900/60">{t.systemDiagnostics}</h3>
                         </div>
 
                         <div className="space-y-5 font-mono">
@@ -229,7 +244,7 @@ function PendingContent() {
                     className="w-full h-18 bg-blue-900 hover:bg-blue-950 text-white rounded-[2rem] font-bold text-sm transition-all shadow-2xl flex items-center justify-center gap-4 group"
                 >
                     <Home size={18} className="group-hover:-translate-y-1 transition-transform" />
-                    <span>Home</span>
+                    <span>{t.home}</span>
                 </button>
             </div>
 
@@ -249,7 +264,7 @@ export default function TransactionPendingPage() {
         <Suspense fallback={
             <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
                 <Loader2 className="animate-spin text-blue-600 w-12 h-12" strokeWidth={2.5} />
-                <span className="text-blue-900/40 font-bold text-sm animate-pulse">Loading...</span>
+                <span className="text-blue-900/40 font-bold text-sm animate-pulse">{translations.EN.loadingLabel}</span>
             </div>
         }>
             <PendingContent />

@@ -16,6 +16,7 @@ import {
     Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 function BankDetailContent() {
     const router = useRouter();
@@ -25,6 +26,19 @@ function BankDetailContent() {
 
     const [loading, setLoading] = useState(true);
     const [method, setMethod] = useState<any>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const fetchMethod = async () => {
@@ -70,7 +84,7 @@ function BankDetailContent() {
                     >
                         <ChevronLeft size={22} />
                     </button>
-                    <h1 className="text-lg font-bold tracking-tight text-blue-900 leading-none">Deposit Details</h1>
+                    <h1 className="text-lg font-bold tracking-tight text-blue-900 leading-none">{t.depositDetails}</h1>
                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
                         <Building2 size={18} />
                     </div>
@@ -86,7 +100,7 @@ function BankDetailContent() {
                 >
                     <div className="inline-flex items-center gap-2 px-6 py-2 bg-blue-50 rounded-full border border-blue-100 shadow-sm">
                         <Wallet size={14} className="text-blue-600" />
-                        <span className="text-[10px] font-bold text-blue-900/60 uppercase tracking-widest">Amount to Deposit</span>
+                        <span className="text-[10px] font-bold text-blue-900/60 uppercase tracking-widest">{t.amountToDeposit}</span>
                     </div>
                     <div className="flex items-center justify-center gap-4">
                         <span className="text-7xl font-black text-blue-900 tracking-tighter italic">
@@ -94,7 +108,7 @@ function BankDetailContent() {
                         </span>
                         <div className="flex flex-col items-start">
                             <span className="text-2xl font-black text-blue-900/20 leading-none">ETB</span>
-                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none mt-1">Confirmed</span>
+                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none mt-1">{t.confirmed}</span>
                         </div>
                     </div>
                 </motion.div>
@@ -108,7 +122,7 @@ function BankDetailContent() {
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
                     <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Total Settlement</p>
+                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{t.totalSettlement}</p>
                         <p className="text-2xl font-black text-white italic">ETB {Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
                     <ShieldCheck size={40} className="text-white/20" strokeWidth={1.5} />
@@ -117,7 +131,7 @@ function BankDetailContent() {
                 {/* Gateway Selection */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between px-2">
-                        <h2 className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none">Select Payment Method</h2>
+                        <h2 className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none">{t.selectPaymentMethod}</h2>
                         <Info size={14} className="text-blue-900/20" />
                     </div>
 
@@ -146,9 +160,9 @@ function BankDetailContent() {
                                 )}
                             </div>
                             <div className="flex flex-col items-start gap-1">
-                                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Recommended Channel</span>
+                                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">{t.recommendedChannel}</span>
                                 <span className="text-lg font-bold text-blue-900 text-left leading-tight">
-                                    {method?.bankName || "Select Bank"}
+                                    {method?.bankName || t.selectBank}
                                 </span>
                             </div>
                         </div>
@@ -162,14 +176,14 @@ function BankDetailContent() {
                 <div className="bg-orange-50 border border-orange-100 rounded-[2rem] p-6 flex gap-4 items-start relative z-10">
                     <Info className="text-orange-500 shrink-0 mt-0.5" size={18} />
                     <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest leading-relaxed">
-                        Please ensure the deposit amount matches your request to avoid any delays in processing.
+                        {t.depositMatchNotice}
                     </p>
                 </div>
             </main>
 
             {/* Stealth Logistics */}
             <div className="fixed bottom-10 left-0 right-0 flex justify-center pointer-events-none opacity-10 z-0">
-                <span className="text-[9px] font-bold uppercase tracking-[1em] text-blue-900">SECURE PAYMENT GATEWAY</span>
+                <span className="text-[9px] font-bold uppercase tracking-[1em] text-blue-900">{t.securePaymentGateway}</span>
             </div>
         </div>
     );

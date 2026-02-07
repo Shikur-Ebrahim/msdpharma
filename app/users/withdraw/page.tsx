@@ -19,6 +19,8 @@ import {
     Info,
     ArrowRight
 } from "lucide-react";
+import { translations, Language } from "@/lib/translations";
+
 
 const DAYS_MAP: Record<number, string> = {
     1: "Mon",
@@ -41,10 +43,24 @@ export default function WithdrawalPage() {
         minAmount: 300,
         maxAmount: 40000,
         activeDays: [1, 2, 3, 4, 5, 6],
-        startTime: "08:00",
+        startTime: "09:00",
         endTime: "17:00",
         frequency: 1,
     });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
+
 
     // Error Modal State
     const [errorModal, setErrorModal] = useState<{ show: boolean, message: string } | null>(null);
@@ -97,8 +113,9 @@ export default function WithdrawalPage() {
                         const ruleData = applicableRule.data();
                         setErrorModal({
                             show: true,
-                            message: ruleData.message || "Please read the withdrawal rules before proceeding."
+                            message: ruleData.message || t.pleaseWaitUntil.replace("{time}", "")
                         });
+
                     }
                 }
             });
@@ -119,49 +136,56 @@ export default function WithdrawalPage() {
         const balance = userData?.balance || 0;
 
         if (!linkedBank) {
-            setErrorModal({ show: true, message: "Please connect a bank account first." });
+            setErrorModal({ show: true, message: t.noBankAccount });
             return;
         }
+
 
         if (!amount || isNaN(numAmount)) {
-            setErrorModal({ show: true, message: "Please enter a valid amount." });
+            setErrorModal({ show: true, message: t.enterAmount });
             return;
         }
+
 
         if (numAmount < withdrawalSettings.minAmount) {
-            setErrorModal({ show: true, message: `Minimum withdrawal amount is ${withdrawalSettings.minAmount} ETB.` });
+            setErrorModal({ show: true, message: t.minDepositError.replace("{min}", String(withdrawalSettings.minAmount)) });
             return;
         }
 
+
         if (numAmount > withdrawalSettings.maxAmount) {
-            setErrorModal({ show: true, message: `Maximum single withdrawal is ${withdrawalSettings.maxAmount.toLocaleString()} ETB.` });
+            setErrorModal({ show: true, message: t.limitMsg.replace("{limit}", withdrawalSettings.maxAmount.toLocaleString()) });
             return;
         }
+
 
         // Check Schedule
         const now = new Date();
         const currentDay = now.getDay();
         const currentTime = now.getHours() * 60 + now.getMinutes();
 
-        const [startH, startM] = withdrawalSettings.startTime.split(":").map(Number);
-        const [endH, endM] = withdrawalSettings.endTime.split(":").map(Number);
+        const [startH, startM] = (withdrawalSettings.startTime || "09:00").split(":").map(Number);
+        const [endH, endM] = (withdrawalSettings.endTime || "17:00").split(":").map(Number);
         const startTotal = startH * 60 + startM;
         const endTotal = endH * 60 + endM;
 
         if (!withdrawalSettings.activeDays.includes(currentDay)) {
-            setErrorModal({ show: true, message: "Withdrawals are not available today." });
+            setErrorModal({ show: true, message: t.noProductsActive });
             return;
         }
+
 
         if (currentTime < startTotal || currentTime > endTotal) {
-            setErrorModal({ show: true, message: `Withdrawals are only available between ${withdrawalSettings.startTime} and ${withdrawalSettings.endTime}.` });
+            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", withdrawalSettings.startTime) });
             return;
         }
 
+
         if (numAmount > balance) {
-            setErrorModal({ show: true, message: "Insufficient balance to process request." });
+            setErrorModal({ show: true, message: t.insufficientBalance });
             return;
         }
+
 
         // Redirect to Security Page with amount as query param
         router.push(`/users/withdraw/security?amount=${amount}`);
@@ -200,18 +224,20 @@ export default function WithdrawalPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h3 className="text-2xl font-bold text-blue-900 tracking-tight">Alert</h3>
+                                <h3 className="text-2xl font-bold text-blue-900 tracking-tight">{t.withdrawalAlert}</h3>
                                 <p className="text-sm font-medium text-slate-400 leading-relaxed px-2">
                                     {errorModal.message}
                                 </p>
                             </div>
 
+
                             <button
                                 onClick={() => setErrorModal(null)}
                                 className="w-full py-6 bg-red-500 text-white rounded-[1.8rem] text-sm font-bold shadow-xl shadow-red-500/20 active:scale-95 transition-all"
                             >
-                                Ok
+                                {t.ok}
                             </button>
+
                         </div>
                     </div>
                 </div>
@@ -226,8 +252,9 @@ export default function WithdrawalPage() {
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-xl font-bold text-blue-900 text-center flex-1">
-                    Withdraw
+                    {t.withdraw}
                 </h1>
+
                 <div className="w-12" /> {/* Spacer */}
             </header>
 
@@ -238,8 +265,8 @@ export default function WithdrawalPage() {
                         const now = new Date();
                         const currentDay = now.getDay();
                         const currentTime = now.getHours() * 60 + now.getMinutes();
-                        const [startH, startM] = withdrawalSettings.startTime.split(":").map(Number);
-                        const [endH, endM] = withdrawalSettings.endTime.split(":").map(Number);
+                        const [startH, startM] = (withdrawalSettings.startTime || "09:00").split(":").map(Number);
+                        const [endH, endM] = (withdrawalSettings.endTime || "17:00").split(":").map(Number);
                         const startTotal = startH * 60 + startM;
                         const endTotal = endH * 60 + endM;
 
@@ -253,11 +280,12 @@ export default function WithdrawalPage() {
                                         <Clock size={32} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-red-500 mb-1">Closed</p>
+                                        <p className="text-sm font-bold text-red-500 mb-1">{t.closed}</p>
                                         <p className="text-base font-bold text-blue-900">
-                                            Opens at {withdrawalSettings.startTime} tomorrow
+                                            {t.opensAtTomorrow.replace("{time}", withdrawalSettings.startTime)}
                                         </p>
                                     </div>
+
                                 </div>
                             );
                         }
@@ -267,11 +295,12 @@ export default function WithdrawalPage() {
                                     <CheckCircle2 size={32} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-green-600 mb-1">Active</p>
+                                    <p className="text-sm font-bold text-green-600 mb-1">{t.active}</p>
                                     <p className="text-base font-bold text-blue-900">
-                                        Available until {withdrawalSettings.endTime}
+                                        {t.availableUntil.replace("{time}", withdrawalSettings.endTime)}
                                     </p>
                                 </div>
+
                                 <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.5)]"></div>
                             </div>
                         );
@@ -283,7 +312,8 @@ export default function WithdrawalPage() {
                     <div className="bg-white rounded-[3rem] p-12 border border-blue-50 shadow-xl shadow-blue-900/5 relative overflow-hidden h-64 flex flex-col justify-center">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full blur-3xl -mr-20 -mt-20"></div>
 
-                        <p className="text-slate-400 text-sm font-medium mb-4">Withdraw Amount</p>
+                        <p className="text-slate-400 text-sm font-medium mb-4">{t.withdrawAmountLabel}</p>
+
                         <div className="flex items-baseline gap-4 relative z-10">
                             <input
                                 type="number"
@@ -312,7 +342,8 @@ export default function WithdrawalPage() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
                     <div className="flex justify-between items-center p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100">
-                        <span className="text-sm font-bold text-slate-800">Balance</span>
+                        <span className="text-sm font-bold text-slate-800">{t.balance}</span>
+
                         <span className="text-xl font-bold text-blue-900 tabular-nums">
                             {Number(userData?.balance || 0).toLocaleString()} <span className="text-xs text-slate-400">ETB</span>
                         </span>
@@ -321,14 +352,16 @@ export default function WithdrawalPage() {
                     <div className="space-y-4 px-2">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <span className="text-sm font-bold text-slate-800">Fee</span>
+                                <span className="text-sm font-bold text-slate-800">{t.withdrawalFee}</span>
                                 <div className="px-3 py-1 rounded-lg bg-green-500 text-white text-[10px] font-bold leading-none">5%</div>
                             </div>
+
                             <span className="text-sm font-bold text-red-500 tabular-nums">-{fee.toLocaleString()} ETB</span>
                         </div>
                         <div className="h-[1px] bg-blue-50"></div>
                         <div className="flex justify-between items-end pt-2">
-                            <span className="text-sm font-bold text-slate-400 mb-1">You will receive</span>
+                            <span className="text-sm font-bold text-slate-400 mb-1">{t.youWillReceive}</span>
+
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-green-600 tabular-nums tracking-tighter">
                                     {actualReceipt.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -342,8 +375,9 @@ export default function WithdrawalPage() {
                 {/* Bank Selection */}
                 <section className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Select Withdrawal Account</h2>
+                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-tight">{t.selectAccountLabel}</h2>
                     </div>
+
 
                     {linkedBank ? (
                         <div className="bg-white rounded-[2.5rem] border-2 border-indigo-50 shadow-xl shadow-indigo-100/20 overflow-hidden group/bank hover:border-indigo-200 transition-all cursor-pointer">
@@ -359,8 +393,9 @@ export default function WithdrawalPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="text-2xl font-black text-slate-800 truncate tracking-tight uppercase leading-none">
-                                            {linkedBank.accountNumber.slice(0, 10)}... <span className="text-slate-200">Account</span>
+                                            {linkedBank.accountNumber.slice(0, 10)}... <span className="text-slate-200">{t.account}</span>
                                         </h4>
+
                                         <p className="text-sm font-bold text-slate-400 mt-2 tracking-wide uppercase">{linkedBank.holderName}</p>
                                     </div>
                                     <div className="text-indigo-100 group-hover/bank:text-indigo-400 transition-colors">
@@ -374,17 +409,20 @@ export default function WithdrawalPage() {
                                 {/* Details Section */}
                                 <div className="space-y-4 px-1">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Bank</span>
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">{t.bank}</span>
                                         <span className="text-sm font-bold text-slate-600">{linkedBank.bankName}</span>
                                     </div>
+
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Holder</span>
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">{t.holder}</span>
                                         <span className="text-sm font-bold text-slate-600">{linkedBank.holderName}</span>
                                     </div>
+
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Number</span>
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">{t.number}</span>
                                         <span className="text-sm font-bold text-slate-800 font-mono tracking-tighter">{linkedBank.accountNumber}</span>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -396,8 +434,9 @@ export default function WithdrawalPage() {
                             <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6 group-hover/add:scale-110 transition-all text-blue-600 border border-blue-100">
                                 <CreditCard size={36} />
                             </div>
-                            <p className="text-sm font-bold text-slate-800 mb-2">No Bank Account</p>
-                            <p className="text-sm text-slate-400">Tap to connect your bank account</p>
+                            <p className="text-sm font-bold text-slate-800 mb-2">{t.noBankAccount}</p>
+                            <p className="text-sm text-slate-400">{t.tapToConnectBank}</p>
+
                         </div>
                     )}
                 </section>
@@ -410,16 +449,17 @@ export default function WithdrawalPage() {
                         <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-900 border border-blue-100">
                             <Info size={22} />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-800">Rules</h3>
+                        <h3 className="text-sm font-bold text-slate-800">{t.guidelines}</h3>
                     </div>
+
 
                     <ul className="space-y-8">
                         {[
-                            `Hospital Hours: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
-                            `Dosage Limits: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
-                            `Frequency: One refund per ${withdrawalSettings.frequency} day(s)`,
-                            "Processing: Clinical verification takes 2-72 hours",
-                            "Identity: Bank name must match medical profile"
+                            `${t.hospitalHours}: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
+                            `${t.dosageLimits}: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
+                            `${t.oneRefundPer.replace("{days}", String(withdrawalSettings.frequency))}`,
+                            t.processingTimeDesc,
+                            `${t.identityRule}: ${t.bankMatchRule}`
                         ].map((rule, i) => {
                             const [label, ...val] = rule.split(": ");
                             return (
@@ -446,8 +486,9 @@ export default function WithdrawalPage() {
                     className="w-full bg-orange-500 text-white py-7 rounded-[2.5rem] font-bold text-lg shadow-xl shadow-orange-500/20 hover:shadow-2xl hover:bg-orange-600 transition-all duration-500 flex items-center justify-center gap-4 group"
                 >
                     <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-                    <span>Withdraw</span>
+                    <span>{t.withdraw}</span>
                 </button>
+
             </div>
         </div>
     );

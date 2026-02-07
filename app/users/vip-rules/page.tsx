@@ -18,11 +18,25 @@ import {
     Activity
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function UserVipRulesPage() {
     const router = useRouter();
     const [vipRules, setVipRules] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const q = query(collection(db, "VipRules"), orderBy("createdAt", "desc"));
@@ -67,8 +81,8 @@ export default function UserVipRulesPage() {
                     <ChevronLeft size={20} />
                 </button>
                 <div className="flex flex-col items-center">
-                    <h1 className="text-base font-bold text-blue-900 tracking-tight leading-none">VIP Levels</h1>
-                    <span className="text-[10px] font-bold text-slate-300 tracking-wider mt-1">Ranks</span>
+                    <h1 className="text-base font-bold text-blue-900 tracking-tight leading-none">{t.vipLevels}</h1>
+                    <span className="text-[10px] font-bold text-slate-300 tracking-wider mt-1">{t.ranks}</span>
                 </div>
                 <div className="w-9"></div>
             </header>
@@ -83,9 +97,9 @@ export default function UserVipRulesPage() {
                     >
                         <Medal size={32} className="text-blue-600" strokeWidth={2.5} />
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-blue-900 tracking-tight leading-tight">Level Up</h2>
+                    <h2 className="text-2xl font-bold text-blue-900 tracking-tight leading-tight">{t.levelUpTitle}</h2>
                     <p className="text-sm font-medium text-slate-400 leading-relaxed max-w-[260px] mx-auto">
-                        Advance through levels to unlock monthly salaries and bonuses.
+                        {t.levelUpDesc}
                     </p>
                 </div>
 
@@ -116,7 +130,7 @@ export default function UserVipRulesPage() {
                                             <div className="bg-blue-50/30 rounded-2xl p-4 border border-blue-50">
                                                 <div className="flex items-center gap-2 mb-1.5">
                                                     <Users size={12} className="text-blue-600" />
-                                                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Team</span>
+                                                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t.teamLabel}</span>
                                                 </div>
                                                 <p className="text-lg font-bold text-blue-900 leading-none">
                                                     {rule.investedTeamSize}
@@ -126,7 +140,7 @@ export default function UserVipRulesPage() {
                                             <div className="bg-blue-50/30 rounded-2xl p-4 border border-blue-50">
                                                 <div className="flex items-center gap-2 mb-1.5">
                                                     <Activity size={12} className="text-green-600" />
-                                                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Assets</span>
+                                                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t.assetsLabel}</span>
                                                 </div>
                                                 <p className="text-base font-bold text-blue-900 leading-none truncate">
                                                     {Number(rule.totalTeamAssets).toLocaleString()}
@@ -142,19 +156,19 @@ export default function UserVipRulesPage() {
 
                                         <div className="flex justify-between items-center gap-4 border-b border-white/5 pb-5">
                                             <div>
-                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1 block">Monthly Salary</span>
+                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1 block">{t.monthlySalary}</span>
                                                 <p className="text-xl font-bold text-white tracking-tight">
-                                                    {Number(rule.monthlySalary).toLocaleString()}<span className="text-[10px] ml-1 text-white/40">ETB / Mo</span>
+                                                    {Number(rule.monthlySalary).toLocaleString()}<span className="text-[10px] ml-1 text-white/40">{t.perMonth}</span>
                                                 </p>
                                             </div>
                                             <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md border border-white/5">
-                                                <span className="text-white text-[10px] font-bold tracking-wider">Level</span>
+                                                <span className="text-white text-[10px] font-bold tracking-wider">{t.levels}</span>
                                             </div>
                                         </div>
 
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1 block">Grant</span>
+                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1 block">{t.grant}</span>
                                                 <p className="text-base font-bold text-white/80 tracking-tight">
                                                     {Number(rule.yearlySalary5Year).toLocaleString()}<span className="text-[9px] ml-1 text-white/20">ETB</span>
                                                 </p>
@@ -169,7 +183,7 @@ export default function UserVipRulesPage() {
                         ))
                     ) : (
                         <div className="text-center py-20 text-slate-300 font-bold tracking-widest text-xs">
-                            No levels found
+                            {t.noLevelsFound}
                         </div>
                     )}
                 </div>
@@ -182,7 +196,7 @@ export default function UserVipRulesPage() {
                             <Stethoscope size={28} className="text-white" />
                         </div>
                         <p className="text-sm font-bold text-white leading-relaxed tracking-wide">
-                            Reach <span className="bg-white text-orange-600 px-2 py-0.5 rounded-lg mx-1">VIP Level 7</span> to become a Regional Manager and receive annual dividends of:
+                            {t.regionalManagerPromo.replace("{level}", t.vipLevelTarget)}
                         </p>
                         <p className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">
                             10,000,000 <span className="text-lg font-bold opacity-60">ETB</span>

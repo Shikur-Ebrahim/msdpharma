@@ -2,6 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { PartyPopper } from "lucide-react";
+import { useEffect, useState } from "react";
+import { translations, Language } from "@/lib/translations";
 
 interface WeekendNotificationModalProps {
     title: string;
@@ -14,6 +16,19 @@ export default function WeekendNotificationModal({
     message,
     onConfirm
 }: WeekendNotificationModalProps) {
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
@@ -60,7 +75,7 @@ export default function WeekendNotificationModal({
                             onClick={onConfirm}
                             className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl font-black uppercase tracking-widest shadow-lg shadow-orange-500/25 transition-all text-sm"
                         >
-                            OK, Check it out!
+                            {t.checkItOut}
                         </button>
                     </div>
                 </motion.div>

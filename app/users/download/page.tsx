@@ -18,6 +18,7 @@ import {
     CloudDownload
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function DownloadAppPage() {
     const router = useRouter();
@@ -25,6 +26,19 @@ export default function DownloadAppPage() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [showInstruction, setShowInstruction] = useState(false);
     const [installStatus, setInstallStatus] = useState<'idle' | 'installing' | 'installed'>('idle');
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const handler = (e: any) => {
@@ -76,8 +90,8 @@ export default function DownloadAppPage() {
                         <ChevronLeft size={22} className="text-blue-900" />
                     </button>
                     <div className="flex flex-col">
-                        <h1 className="text-lg font-bold text-blue-900 leading-none">Download App</h1>
-                        <span className="text-[10px] font-medium text-blue-900/40 mt-1">MSD Mobile Experience</span>
+                        <h1 className="text-lg font-bold text-blue-900 leading-none">{t.downloadApp}</h1>
+                        <span className="text-[10px] font-medium text-blue-900/40 mt-1">{t.msdMobileExp}</span>
                     </div>
                 </div>
             </header>
@@ -94,7 +108,7 @@ export default function DownloadAppPage() {
                         <div className="absolute inset-0 bg-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2.5rem]"></div>
                     </motion.div>
                     <div className="flex flex-col items-center">
-                        <h1 className="text-4xl font-bold tracking-tight text-blue-900 leading-none mb-3">MSD Mobile</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-blue-900 leading-none mb-3">{t.msdMobile}</h1>
                     </div>
                 </section>
 
@@ -106,24 +120,24 @@ export default function DownloadAppPage() {
                                 <span className="text-base font-bold text-blue-900">4.9</span>
                                 <Star size={12} fill="#1E3A8A" className="text-blue-900" />
                             </div>
-                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">12K REVIEWS</span>
+                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">{t.twelveKReviews}</span>
                         </div>
                         <div className="flex flex-col items-center gap-1.5 border-x border-blue-100/50">
                             <div className="flex items-center gap-1">
                                 <Download size={14} className="text-blue-900" />
                                 <span className="text-base font-bold text-blue-900">32 MB</span>
                             </div>
-                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">SIZE</span>
+                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">{t.size}</span>
                         </div>
                         <div className="flex flex-col items-center gap-1.5 border-r border-blue-100/50">
                             <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center border border-blue-200">
                                 <span className="text-[10px] font-bold leading-none">3+</span>
                             </div>
-                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">PEGI 3</span>
+                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">{t.pegiThree}</span>
                         </div>
                         <div className="flex flex-col items-center gap-1.5">
                             <span className="text-base font-bold text-blue-900">500K+</span>
-                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">DOWNLOADS</span>
+                            <span className="text-[10px] text-blue-900/40 font-bold whitespace-nowrap">{t.fiveHundredKDownloads}</span>
                         </div>
                     </div>
                 </section>
@@ -139,14 +153,14 @@ export default function DownloadAppPage() {
                             className="w-full h-20 bg-orange-500 rounded-[2rem] flex items-center justify-center gap-4 shadow-xl shadow-orange-500/20 group transition-all"
                         >
                             <CloudDownload size={28} className="text-white" />
-                            <span className="text-xl font-bold text-white tracking-wider uppercase">DOWNLOAD APP</span>
+                            <span className="text-xl font-bold text-white tracking-wider uppercase">{t.downloadApp}</span>
                         </motion.button>
                     )}
 
                     {installStatus === 'installing' && (
                         <div className="w-full h-18 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-center gap-3">
                             <Loader2 size={24} className="text-blue-600 animate-spin" />
-                            <span className="text-base font-bold text-blue-900/40">Starting Download...</span>
+                            <span className="text-base font-bold text-blue-900/40">{t.startingDownload}</span>
                         </div>
                     )}
 
@@ -156,7 +170,7 @@ export default function DownloadAppPage() {
                             className="w-full h-18 bg-green-600 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-green-600/20"
                         >
                             <CheckCircle2 size={24} className="text-white" />
-                            <span className="text-lg font-bold text-white">Open App</span>
+                            <span className="text-lg font-bold text-white">{t.openApp}</span>
                         </button>
                     )}
                 </section>
@@ -181,15 +195,15 @@ export default function DownloadAppPage() {
                                     <div className="w-20 h-20 mx-auto mb-6 rounded-[2rem] bg-orange-50 flex items-center justify-center border border-orange-100">
                                         <Smartphone size={36} className="text-orange-500" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-blue-900">How to Install</h2>
-                                    <p className="text-xs font-semibold text-blue-900/40 mt-1">Follow these simple steps</p>
+                                    <h2 className="text-2xl font-bold text-blue-900">{t.howToInstall}</h2>
+                                    <p className="text-xs font-semibold text-blue-900/40 mt-1">{t.followSteps}</p>
                                 </div>
 
                                 <div className="space-y-6">
                                     {[
-                                        { step: "01", text: "Tap browser menu button", icon: <Share2 size={12} /> },
-                                        { step: "02", text: "Select 'Add to Home Screen'", icon: <MoreVertical size={12} /> },
-                                        { step: "03", text: "Authorize deployment", icon: <CheckCircle2 size={12} /> }
+                                        { step: "01", text: t.stepOneDownload, icon: <Share2 size={12} /> },
+                                        { step: "02", text: t.stepTwoDownload, icon: <MoreVertical size={12} /> },
+                                        { step: "03", text: t.stepThreeDownload, icon: <CheckCircle2 size={12} /> }
                                     ].map((s, i) => (
                                         <div key={i} className="flex gap-4 items-center">
                                             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
@@ -204,7 +218,7 @@ export default function DownloadAppPage() {
                                     onClick={() => setShowInstruction(false)}
                                     className="w-full h-16 bg-blue-900 hover:bg-blue-950 rounded-2xl text-white font-bold transition-all shadow-xl shadow-blue-900/10"
                                 >
-                                    Got it
+                                    {t.gotIt}
                                 </button>
                             </div>
                         </motion.div>
@@ -214,7 +228,7 @@ export default function DownloadAppPage() {
 
             {/* Bottom Logistics */}
             <div className="fixed bottom-10 left-0 right-0 flex justify-center pointer-events-none opacity-20">
-                <span className="text-[10px] font-bold text-blue-900">Secure Download</span>
+                <span className="text-[10px] font-bold text-blue-900">{t.secureDownload}</span>
             </div>
         </div>
     );

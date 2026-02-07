@@ -19,6 +19,7 @@ import {
     ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function ExchangePage() {
     const router = useRouter();
@@ -33,6 +34,19 @@ export default function ExchangePage() {
     const [exchangedCoins, setExchangedCoins] = useState(0);
     const [exchangedETB, setExchangedETB] = useState(0);
     const [error, setError] = useState("");
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -78,12 +92,12 @@ export default function ExchangePage() {
         const amount = parseFloat(coinAmount);
 
         if (amount < 100) {
-            setError("Minimum exchange amount is 100 Referral Credits");
+            setError(t.minExchangeError);
             return;
         }
 
         if (amount > (userData.teamIncome || 0)) {
-            setError("Insufficient Referral Credits");
+            setError(t.insufficientPointsError);
             return;
         }
 
@@ -107,7 +121,7 @@ export default function ExchangePage() {
 
         } catch (error) {
             console.error("Error exchanging coins:", error);
-            setError("Failed to process exchange.");
+            setError(t.exchangeFailedError);
         } finally {
             setExchanging(false);
         }
@@ -139,8 +153,8 @@ export default function ExchangePage() {
                         <ChevronLeft size={22} />
                     </button>
                     <div className="flex flex-col">
-                        <h1 className="text-lg font-bold text-blue-900 leading-none">Exchange Points</h1>
-                        <span className="text-[10px] text-blue-900/60 mt-1">Convert your points to ETB</span>
+                        <h1 className="text-lg font-bold text-blue-900 leading-none">{t.exchangePoints}</h1>
+                        <span className="text-[10px] text-blue-900/60 mt-1">{t.convertPointsDesc}</span>
                     </div>
                 </div>
             </header>
@@ -149,7 +163,7 @@ export default function ExchangePage() {
                 <div className="bg-white rounded-3xl p-6 shadow-xl shadow-blue-900/5 border border-blue-50 flex items-center justify-between group overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-orange-100/50 transition-colors"></div>
                     <div className="relative z-10">
-                        <span className="text-sm font-medium text-blue-900/60 block mb-1">Available Points</span>
+                        <span className="text-sm font-medium text-blue-900/60 block mb-1">{t.availablePoints}</span>
                         <div className="flex items-center gap-3">
                             <Activity size={24} className="text-orange-500" />
                             <span className="text-3xl font-bold text-blue-900 tabular-nums">{Number(userData?.teamIncome || 0).toLocaleString()}</span>
@@ -164,10 +178,10 @@ export default function ExchangePage() {
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -mr-24 -mt-24 group-hover:bg-white/10 transition-colors duration-700"></div>
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="space-y-3">
-                            <span className="text-sm font-medium text-white/60 block">Current Rate</span>
+                            <span className="text-sm font-medium text-white/60 block">{t.currentRate}</span>
                             <div className="flex items-center gap-4">
                                 <div className="flex flex-col">
-                                    <span className="text-2xl font-bold">1 Point</span>
+                                    <span className="text-2xl font-bold">{t.onePoint}</span>
                                 </div>
                                 <ArrowLeftRight size={18} className="text-white/30" />
                                 <div className="flex flex-col">
@@ -185,8 +199,8 @@ export default function ExchangePage() {
                     <div className="space-y-6">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-sm font-medium text-blue-900/60">Amount to Exchange</label>
-                                <span className="text-[11px] text-blue-900/40">Min. 100 Points</span>
+                                <label className="text-sm font-medium text-blue-900/60">{t.amountToExchange}</label>
+                                <span className="text-[11px] text-blue-900/40">{t.min100Points}</span>
                             </div>
                             <div className="relative group/input">
                                 <input
@@ -197,7 +211,7 @@ export default function ExchangePage() {
                                     placeholder="0"
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-blue-900/60 bg-white border border-blue-50 px-3 py-1.5 rounded-lg shadow-sm">
-                                    Points
+                                    {t.points}
                                 </div>
                             </div>
                         </div>
@@ -209,7 +223,7 @@ export default function ExchangePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-blue-900/60 px-1">You Will Receive</label>
+                            <label className="text-sm font-medium text-blue-900/60 px-1">{t.youWillReceive}</label>
                             <div className="w-full bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 flex justify-between items-center shadow-inner">
                                 <span className="text-2xl font-bold text-green-600 tabular-nums">{etbPreview.toLocaleString()}</span>
                                 <span className="text-xs font-semibold text-blue-900/60 bg-white border border-blue-50 px-3 py-1.5 rounded-lg shadow-sm">ETB</span>
@@ -241,7 +255,7 @@ export default function ExchangePage() {
                         ) : (
                             <ShieldCheck size={20} />
                         )}
-                        Confirm Exchange
+                        {t.confirmExchange}
                     </button>
                 </div>
             </main>
@@ -266,9 +280,11 @@ export default function ExchangePage() {
                             </div>
 
                             <div className="space-y-3 mb-8">
-                                <h3 className="text-2xl font-bold text-blue-900">Exchange Success</h3>
+                                <h3 className="text-2xl font-bold text-blue-900">{t.exchangeSuccessTitle}</h3>
                                 <p className="text-sm text-blue-900/60 leading-relaxed">
-                                    Your exchange of <span className="font-bold text-blue-900">{exchangedCoins} Points</span> to <span className="font-bold text-green-600">{exchangedETB} ETB</span> was successful.
+                                    {t.exchangeSuccessMsg
+                                        .replace("{coins}", exchangedCoins.toString())
+                                        .replace("{etb}", exchangedETB.toLocaleString())}
                                 </p>
                             </div>
 
@@ -276,7 +292,7 @@ export default function ExchangePage() {
                                 onClick={() => setShowSuccess(false)}
                                 className="w-full h-14 bg-blue-900 hover:bg-blue-950 text-white rounded-2xl font-bold text-sm transition-all shadow-xl shadow-blue-900/10"
                             >
-                                Close
+                                {t.close}
                             </button>
                         </motion.div>
                     </motion.div>

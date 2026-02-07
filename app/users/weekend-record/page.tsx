@@ -20,6 +20,7 @@ import {
     ArrowDownCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function WeekendRecordPage() {
     const router = useRouter();
@@ -28,6 +29,19 @@ export default function WeekendRecordPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const [userData, setUserData] = useState<any>(null);
     const [totalWeekendBalance, setTotalWeekendBalance] = useState(0);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -175,8 +189,8 @@ export default function WeekendRecordPage() {
                         <ChevronLeft size={22} strokeWidth={2.5} />
                     </motion.button>
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-black tracking-tight leading-tight text-slate-900">My Collection</h1>
-                        <span className="text-[10px] font-black text-orange-500 tracking-[0.2em] uppercase">Weekend Assets</span>
+                        <h1 className="text-xl font-black tracking-tight leading-tight text-slate-900">{t.myCollection}</h1>
+                        <span className="text-[10px] font-black text-orange-500 tracking-[0.2em] uppercase">{t.weekendAssets}</span>
                     </div>
                 </div>
                 <motion.div
@@ -207,8 +221,8 @@ export default function WeekendRecordPage() {
                                 <Wallet size={24} className="text-orange-500" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Weekend Balance</span>
-                                <span className="text-lg font-black text-slate-900">Weekend Balance</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.weekendBalance}</span>
+                                <span className="text-lg font-black text-slate-900">{t.weekendBalance}</span>
                             </div>
                         </div>
 
@@ -230,12 +244,12 @@ export default function WeekendRecordPage() {
                         <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-2">
                             <Package size={40} className="text-orange-300" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">No weekend purchases yet.</p>
+                        <p className="text-sm font-bold text-slate-400">{t.noWeekendPurchases}</p>
                         <button
                             onClick={() => router.push('/users/weekend')}
                             className="px-8 py-3 bg-orange-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/20"
                         >
-                            Explore Weekend
+                            {t.exploreWeekend}
                         </button>
                     </motion.div>
                 ) : (
@@ -273,25 +287,25 @@ export default function WeekendRecordPage() {
                                         </div>
                                         <div className="px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider bg-slate-50 border-slate-100 text-slate-500 flex items-center gap-1">
                                             <Clock size={10} />
-                                            {order.contractPeriod} Days
+                                            {order.contractPeriod} {t.days}
                                         </div>
                                     </div>
 
                                     {/* Stats Grid */}
                                     <div className="grid grid-cols-2 gap-3 relative z-10">
                                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Invested</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{t.invested}</span>
                                             <span className="text-sm font-black text-slate-900">{order.price?.toLocaleString()} ETB</span>
                                         </div>
                                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Daily Income</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{t.dailyIncome}</span>
                                             <span className="text-sm font-black text-slate-900">{order.dailyIncome?.toLocaleString()} ETB</span>
                                         </div>
                                     </div>
 
                                     {/* Balance Section */}
                                     <div className="mt-4 bg-orange-50 rounded-2xl p-4 border border-orange-100 flex items-center justify-between relative z-10">
-                                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-wider">Balance</span>
+                                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-wider">{t.balance}</span>
                                         <span className="text-xl font-black text-orange-600">{order.weekendBalance?.toLocaleString()} ETB</span>
                                     </div>
 
@@ -310,17 +324,17 @@ export default function WeekendRecordPage() {
                                         {isWithdrawn ? (
                                             <>
                                                 <CheckCircle2 size={18} />
-                                                Withdrawn
+                                                {t.withdrawn}
                                             </>
                                         ) : canWithdraw ? (
                                             <>
                                                 <ArrowDownCircle size={18} />
-                                                Withdraw Now
+                                                {t.withdrawNow}
                                             </>
                                         ) : (
                                             <>
                                                 <Clock size={18} />
-                                                Withdraw ({daysLeft} days left)
+                                                {t.withdrawDaysLeft.replace("{days}", String(daysLeft))}
                                             </>
                                         )}
                                     </motion.button>
@@ -360,19 +374,19 @@ export default function WeekendRecordPage() {
                                 <div className="w-20 h-20 mx-auto mb-6 bg-amber-50 rounded-full flex items-center justify-center">
                                     <AlertTriangle size={40} className="text-amber-500" />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 mb-2">Withdrawal Not Available</h3>
+                                <h3 className="text-xl font-black text-slate-900 mb-2">{t.withdrawalNotAvailable}</h3>
                                 <p className="text-sm text-slate-500 mb-6">
-                                    You can withdraw your balance of <span className="font-bold text-orange-600">{modalData.amount.toLocaleString()} ETB</span> in:
+                                    {t.withdrawalEligibilityMsg.replace("{amount}", modalData.amount.toLocaleString())}
                                 </p>
                                 <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100">
                                     <span className="text-4xl font-black text-orange-600">{modalData.daysLeft}</span>
-                                    <span className="text-sm font-bold text-orange-400 block mt-1">Days Remaining</span>
+                                    <span className="text-sm font-bold text-orange-400 block mt-1">{t.daysRemaining}</span>
                                 </div>
                                 <button
                                     onClick={() => setShowModal(false)}
                                     className="mt-6 w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-wider"
                                 >
-                                    Got It
+                                    {t.ok}
                                 </button>
                             </div>
                         </motion.div>

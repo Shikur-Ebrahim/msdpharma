@@ -17,6 +17,7 @@ import {
     updateDoc
 } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { translations, Language } from "@/lib/translations";
 import {
     ChevronLeft,
     TrendingUp,
@@ -55,6 +56,19 @@ export default function ProfilePage() {
     const [hasRuleUpdates, setHasRuleUpdates] = useState(false);
     const [totalWeekendBalance, setTotalWeekendBalance] = useState(0);
     const [globalWeekendSettings, setGlobalWeekendSettings] = useState<any>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -165,12 +179,12 @@ export default function ProfilePage() {
     };
 
     const stats = [
-        { label: "Deposits", value: Math.floor(userData?.totalRecharge || 0).toLocaleString(), icon: CreditCard, color: "blue", category: "wallet" },
-        { label: "Team Income", value: Math.floor(userData?.teamIncome || 0).toLocaleString(), icon: Users, color: "green", category: "team" },
-        { label: "Total Earnings", value: Math.floor(userData?.totalIncome || 0).toLocaleString(), icon: TrendingUp, color: "blue", category: "earnings" },
-        { label: "Withdrawals", value: Math.floor(userData?.totalWithdrawal || 0).toLocaleString(), icon: ArrowUpRight, color: "orange", category: "wallet" },
-        { label: "Team Size", value: userData?.teamSize || "0", icon: Users, color: "blue", category: "team" },
-        { label: "Daily Income", value: Math.floor(userData?.dailyIncome || 0).toLocaleString(), icon: Zap, color: "green", category: "earnings" },
+        { label: t.deposits, value: Math.floor(userData?.totalRecharge || 0).toLocaleString(), icon: CreditCard, color: "blue", category: "wallet" },
+        { label: t.teamIncome, value: Math.floor(userData?.teamIncome || 0).toLocaleString(), icon: Users, color: "green", category: "team" },
+        { label: t.totalEarnings, value: Math.floor(userData?.totalIncome || 0).toLocaleString(), icon: TrendingUp, color: "blue", category: "earnings" },
+        { label: t.withdrawals, value: Math.floor(userData?.totalWithdrawal || 0).toLocaleString(), icon: ArrowUpRight, color: "orange", category: "wallet" },
+        { label: t.teamSize, value: userData?.teamSize || "0", icon: Users, color: "blue", category: "team" },
+        { label: t.dailyIncome, value: Math.floor(userData?.dailyIncome || 0).toLocaleString(), icon: Zap, color: "green", category: "earnings" },
     ];
 
     return (
@@ -206,7 +220,7 @@ export default function ProfilePage() {
                         {/* Identity Details */}
                         <div className="flex-1 space-y-1.5 overflow-hidden">
                             <div className="space-y-0">
-                                <h2 className="text-2xl font-bold text-blue-900 leading-tight">Customer</h2>
+                                <h2 className="text-2xl font-bold text-blue-900 leading-tight">{t.customer}</h2>
                                 <div className="flex items-center gap-2">
                                     <div className="px-3 py-1 bg-blue-50 rounded-lg border border-blue-100/50">
                                         <span className="text-[10px] font-bold text-blue-900/60 tracking-wider">ID: {userData?.uid?.substring(0, 6).toUpperCase() || user?.uid?.substring(0, 6).toUpperCase() || "..."}</span>
@@ -239,8 +253,8 @@ export default function ProfilePage() {
                                     <Wallet size={28} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-blue-900/40 mb-1">Account Finance</span>
-                                    <span className="text-sm font-bold text-blue-900">Account Balance</span>
+                                    <span className="text-[10px] font-bold text-blue-900/40 mb-1">{t.accountFinance}</span>
+                                    <span className="text-sm font-bold text-blue-900">{t.accountBalance}</span>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end">
@@ -258,8 +272,8 @@ export default function ProfilePage() {
                                     <PartyPopper size={28} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-orange-900/40 mb-1">Weekend Finance</span>
-                                    <span className="text-sm font-bold text-orange-900">Weekend Balance</span>
+                                    <span className="text-[10px] font-bold text-orange-900/40 mb-1">{t.weekendFinance}</span>
+                                    <span className="text-sm font-bold text-orange-900">{t.weekendBalance}</span>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end">
@@ -292,10 +306,10 @@ export default function ProfilePage() {
                 {/* Advanced Core Services - Medical Interaction */}
                 <div className="grid grid-cols-4 gap-4 mb-12">
                     {[
-                        { label: "Recharge", image: null, color: "blue", iconColor: "text-blue-600", path: "/users/funding-details", dark: false, icon: Wallet },
-                        { label: "App", image: "/msd-logo.png", color: "blue", iconColor: "text-white", path: "/users/download", dark: false, icon: null },
-                        { label: "Bank", image: null, color: "green", iconColor: "text-green-600", path: "/users/bank", dark: false, icon: Building2 },
-                        { label: "Help", image: null, color: "orange", iconColor: "text-orange-600", path: "/users/service", dark: false, icon: Headphones },
+                        { label: t.recharge, image: null, color: "blue", iconColor: "text-blue-600", path: "/users/funding-details", dark: false, icon: Wallet },
+                        { label: t.app, image: "/msd-logo.png", color: "blue", iconColor: "text-white", path: "/users/download", dark: false, icon: null },
+                        { label: t.bank, image: null, color: "green", iconColor: "text-green-600", path: "/users/bank", dark: false, icon: Building2 },
+                        { label: t.help, image: null, color: "orange", iconColor: "text-orange-600", path: "/users/service", dark: false, icon: Headphones },
                     ].map((item: any, i) => (
                         <button
                             key={i}
@@ -323,14 +337,14 @@ export default function ProfilePage() {
                 <div className="space-y-6 pb-12">
                     <div className="flex items-center gap-3 mb-8 px-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-900"></div>
-                        <h3 className="text-sm font-bold text-blue-900/40">Account Settings</h3>
+                        <h3 className="text-sm font-bold text-blue-900/40">{t.accountSettings}</h3>
                     </div>
 
                     {[
-                        { title: "Withdrawals", sub: "Transaction history", icon: ArrowUpRight, color: "green", bgColor: "bg-green-50", path: "/users/withdrawal-record" },
-                        { title: "Change Password", sub: "Update security", icon: Key, color: "blue", bgColor: "bg-blue-50", path: "/users/change-password" },
-                        { title: "Withdrawal PIN", sub: "Update payment PIN", icon: Lock, color: "blue", bgColor: "bg-blue-50", path: "/users/change-withdrawal-password" },
-                        { title: "Recharge History", sub: "Fund history", icon: History, color: "blue", bgColor: "bg-blue-50", path: "/users/recharge-records" },
+                        { title: t.withdrawals, sub: t.transactionHistory, icon: ArrowUpRight, color: "green", bgColor: "bg-green-50", path: "/users/withdrawal-record" },
+                        { title: t.changePassword, sub: t.updateSecurity, icon: Key, color: "blue", bgColor: "bg-blue-50", path: "/users/change-password" },
+                        { title: t.withdrawalPin, sub: t.updatePaymentPin, icon: Lock, color: "blue", bgColor: "bg-blue-50", path: "/users/change-withdrawal-password" },
+                        { title: t.rechargeHistory, sub: t.fundHistory, icon: History, color: "blue", bgColor: "bg-blue-50", path: "/users/recharge-records" },
                     ].map((item, i) => (
                         <button
                             key={i}
@@ -368,7 +382,7 @@ export default function ProfilePage() {
                                 <div className="w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center">
                                     <LogOut size={22} className="text-white ml-1" />
                                 </div>
-                                <span className="text-xl font-bold text-white tracking-wide">Logout</span>
+                                <span className="text-xl font-bold text-white tracking-wide">{t.logout}</span>
                             </div>
                         </button>
                     </div>

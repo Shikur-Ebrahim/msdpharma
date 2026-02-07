@@ -20,6 +20,7 @@ import {
     BellRing
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 function CountdownTimer({ targetDate }: { targetDate: Date }) {
     const [timeLeft, setTimeLeft] = useState("");
@@ -54,6 +55,19 @@ export default function WeekendUserPage() {
     const [user, setUser] = useState<User | null>(null);
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     // Product State
     const [products, setProducts] = useState<any[]>([]);
@@ -214,8 +228,8 @@ export default function WeekendUserPage() {
                         <ChevronLeft size={22} strokeWidth={2.5} />
                     </motion.button>
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-black tracking-tight leading-tight text-slate-900">Weekend Lab</h1>
-                        <span className="text-[10px] font-black text-orange-500 tracking-[0.2em] uppercase">MSD EXCLUSIVE</span>
+                        <h1 className="text-xl font-black tracking-tight leading-tight text-slate-900">{t.weekendLab}</h1>
+                        <span className="text-[10px] font-black text-orange-500 tracking-[0.2em] uppercase">{t.msdExclusive}</span>
                     </div>
                 </div>
                 <motion.div
@@ -235,7 +249,7 @@ export default function WeekendUserPage() {
                         {fetchingProducts ? (
                             <div className="py-32 flex flex-col items-center justify-center space-y-6">
                                 <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
-                                <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">Opening Vault</p>
+                                <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{t.openingVault}</p>
                             </div>
                         ) : filteredProducts.length === 0 ? (
                             <motion.div
@@ -244,8 +258,8 @@ export default function WeekendUserPage() {
                                 className="py-24 flex flex-col items-center justify-center bg-orange-50/20 rounded-[3rem] border-2 border-dashed border-orange-100 text-orange-900/40"
                             >
                                 <CalendarDays size={48} className="mb-6 opacity-20" />
-                                <p className="text-[10px] font-black tracking-widest uppercase">No products active right now</p>
-                                <p className="text-[10px] mt-2 font-bold text-slate-400">Check back during the weekend!</p>
+                                <p className="text-[10px] font-black tracking-widest uppercase">{t.noProductsActive}</p>
+                                <p className="text-[10px] mt-2 font-bold text-slate-400">{t.checkBackWeekend}</p>
                             </motion.div>
                         ) : (
                             <div className="grid grid-cols-1 gap-10">
@@ -294,7 +308,7 @@ export default function WeekendUserPage() {
                                                         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-10">
                                                             <div className="bg-white px-5 py-2 rounded-xl shadow-lg rotate-[-3deg]">
                                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">
-                                                                    {isUpcoming ? `STARTS ${formatToEthiopianTime(product.startTime)}` : "CLOSED"}
+                                                                    {isUpcoming ? t.startsAt.replace("{time}", formatToEthiopianTime(product.startTime)) : t.closed}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -307,10 +321,10 @@ export default function WeekendUserPage() {
                                                     <div className="flex justify-between items-start px-2">
                                                         <div className="space-y-1">
                                                             <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{product.name}</h3>
-                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Special Offer</p>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{t.specialOffer}</p>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block mb-1">Price</span>
+                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block mb-1">{t.price}</span>
                                                             <span className="text-2xl font-black text-slate-900">
                                                                 {product.price?.toLocaleString()}
                                                                 <span className="text-[10px] ml-1.5 text-slate-400 font-black tracking-tight">ETB</span>
@@ -322,17 +336,17 @@ export default function WeekendUserPage() {
                                                     <div className="grid grid-cols-2 gap-4">
                                                         {/* Row 1 */}
                                                         <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 flex flex-col gap-2 group-hover:bg-orange-50/50 transition-colors">
-                                                            <span className="text-[10px] font-bold text-slate-500">Daily Income</span>
+                                                            <span className="text-[10px] font-bold text-slate-500">{t.dailyIncome}</span>
                                                             <p className="text-xl font-black text-slate-900 leading-none">
                                                                 {product.dailyIncome?.toLocaleString()}
                                                                 <span className="text-[10px] ml-1.5 font-bold text-slate-400 uppercase">ETB</span>
                                                             </p>
                                                         </div>
                                                         <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 flex flex-col gap-2 group-hover:bg-orange-50/50 transition-colors">
-                                                            <span className="text-[10px] font-bold text-slate-500">Cycle Period</span>
+                                                            <span className="text-[10px] font-bold text-slate-500">{t.cyclePeriod}</span>
                                                             <p className="text-xl font-black text-slate-900 leading-none">
                                                                 {product.contractPeriod}
-                                                                <span className="text-[10px] ml-1.5 font-bold text-slate-400 uppercase">Days</span>
+                                                                <span className="text-[10px] ml-1.5 font-bold text-slate-400 uppercase">{t.days}</span>
                                                             </p>
                                                         </div>
 
@@ -340,7 +354,7 @@ export default function WeekendUserPage() {
                                                         <div className="bg-orange-500 rounded-2xl p-5 flex flex-col gap-2 shadow-lg shadow-orange-500/20 group-hover:bg-orange-600 transition-colors">
                                                             <div className="flex items-center gap-2">
                                                                 <TrendingUp size={12} className="text-white/60" />
-                                                                <span className="text-[9px] font-bold text-white/80">Total Profit</span>
+                                                                <span className="text-[9px] font-bold text-white/80">{t.totalProfit}</span>
                                                             </div>
                                                             <p className="text-xl font-black text-white leading-none">
                                                                 {product.totalProfit?.toLocaleString() || (product.dailyIncome * product.contractPeriod).toLocaleString()}
@@ -356,11 +370,11 @@ export default function WeekendUserPage() {
                                                             <div className="flex items-center gap-2">
                                                                 <Clock size={12} className={isEnded ? "text-slate-400" : "text-white/60"} />
                                                                 <span className={`text-[9px] font-bold ${isEnded ? "text-slate-400" : "text-white/80"}`}>
-                                                                    {isUpcoming ? "STARTS IN" : isActive ? "TIME REMAINING" : "STATUS"}
+                                                                    {isUpcoming ? t.startsIn.toUpperCase() : isActive ? t.timeRemaining.toUpperCase() : t.status.toUpperCase()}
                                                                 </span>
                                                             </div>
                                                             <div className={`text-xl font-black leading-none ${isEnded ? "text-slate-500" : "text-white"}`}>
-                                                                {isEnded ? "ENDED" : <CountdownTimer targetDate={targetDate} />}
+                                                                {isEnded ? t.timeout.toUpperCase() : <CountdownTimer targetDate={targetDate} />}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -374,8 +388,8 @@ export default function WeekendUserPage() {
                                                             return (
                                                                 <>
                                                                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                                                                        <span className="text-slate-400">Sales Status</span>
-                                                                        <span className="text-orange-600">{currentPercent}% SOLD</span>
+                                                                        <span className="text-slate-400">{t.salesStatus}</span>
+                                                                        <span className="text-orange-600">{t.soldLabel.replace("{percent}", String(currentPercent))}</span>
                                                                     </div>
                                                                     <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
                                                                         <motion.div
@@ -406,9 +420,9 @@ export default function WeekendUserPage() {
                                                         {isUpcoming ? (
                                                             <span className="flex items-center gap-2">
                                                                 <BellRing size={16} />
-                                                                WAIT FOR {formatToEthiopianTime(product.startTime)}
+                                                                {t.waitForTime.replace("{time}", formatToEthiopianTime(product.startTime))}
                                                             </span>
-                                                        ) : isEnded ? "TIME OUT" : "BUY"}
+                                                        ) : isEnded ? t.timeout : t.buy}
                                                     </button>
                                                 </div>
                                             </motion.div>
@@ -438,16 +452,16 @@ export default function WeekendUserPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Active at {formatToEthiopianTime(selectedProduct.startTime)}</h3>
+                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t.activeAt.replace("{time}", formatToEthiopianTime(selectedProduct.startTime))}</h3>
                                         <p className="text-sm font-medium text-slate-500 leading-relaxed px-2">
-                                            This event has not started yet. <br />
-                                            Please wait until <span className="text-slate-900 font-bold">{formatToEthiopianTime(selectedProduct.startTime)}</span> (EAT) to purchase this product.
+                                            {t.eventNotStarted} <br />
+                                            {t.pleaseWaitUntil.replace("{time}", formatToEthiopianTime(selectedProduct.startTime))}
                                         </p>
                                     </div>
 
                                     {/* Timer Preview */}
                                     <div className="bg-slate-50 px-6 py-3 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Time Remaining</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{t.timeRemaining}</p>
                                         <p className="text-xl font-black text-slate-900 font-mono">
                                             <CountdownTimer targetDate={getProductTimeStatus(selectedProduct).targetDate} />
                                         </p>
@@ -458,7 +472,7 @@ export default function WeekendUserPage() {
                                             onClick={handleRefresh}
                                             className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-900/20"
                                         >
-                                            OK
+                                            {t.ok}
                                         </button>
                                     </div>
                                 </div>

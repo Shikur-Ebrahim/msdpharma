@@ -28,6 +28,7 @@ import {
     CreditCard
 } from "lucide-react";
 import { toast } from "sonner";
+import { translations, Language } from "@/lib/translations";
 
 export default function UserBankPage() {
     const router = useRouter();
@@ -39,6 +40,19 @@ export default function UserBankPage() {
     const [submitting, setSubmitting] = useState(false);
     const [showBankDropdown, setShowBankDropdown] = useState(false);
     const [userData, setUserData] = useState<any>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -99,7 +113,7 @@ export default function UserBankPage() {
     const handleConnect = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.bankName || !formData.holderName || !formData.accountNumber) {
-            toast.error("Please fill all fields");
+            toast.error(t.fillAllFields);
             return;
         }
 
@@ -112,11 +126,11 @@ export default function UserBankPage() {
                 status: "verified",
                 linkedAt: new Date().toISOString()
             });
-            toast.success("Bank account linked successfully!");
+            toast.success(t.bankLinkedSuccess);
             setView("list");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to link bank account");
+            toast.error(t.bankLinkFailed);
         } finally {
             setSubmitting(false);
         }
@@ -124,7 +138,7 @@ export default function UserBankPage() {
 
     const handleUpdateBankDetails = async () => {
         if (!editForm.holderName || !editForm.accountNumber) {
-            toast.error("Please fill all fields");
+            toast.error(t.fillAllFields);
             return;
         }
 
@@ -137,11 +151,11 @@ export default function UserBankPage() {
                 accountNumber: editForm.accountNumber,
                 updatedAt: new Date().toISOString()
             });
-            toast.success("Details updated successfully");
+            toast.success(t.detailsUpdated);
             setIsEditing(false);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update details");
+            toast.error(t.detailsUpdateFailed);
         } finally {
             setUpdating(false);
         }
@@ -173,7 +187,7 @@ export default function UserBankPage() {
                         <ChevronLeft size={24} />
                     </button>
                     <h1 className="text-xl font-bold text-slate-900 leading-none">
-                        {view === "list" ? "Bank Account" : "Link Bank"}
+                        {view === "list" ? t.bankAccount : t.linkBank}
                     </h1>
                     <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-orange-50 text-orange-600 border border-orange-100 italic font-black text-xs">
                         MSD
@@ -186,12 +200,12 @@ export default function UserBankPage() {
                             /* Linked State */
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
                                 <div className="flex items-center justify-between px-2 pt-28">
-                                    <h3 className="text-sm font-medium text-slate-400">Your bank account</h3>
+                                    <h3 className="text-sm font-medium text-slate-400">{t.yourBankAccount}</h3>
                                     <button
                                         onClick={() => router.push("/users/service")}
                                         className="text-xs font-semibold text-orange-600 flex items-center gap-2 transition-all hover:bg-orange-50 px-3 py-2 rounded-lg"
                                     >
-                                        <Plus size={14} strokeWidth={3} /> Change Bank
+                                        <Plus size={14} strokeWidth={3} /> {t.changeBank}
                                     </button>
                                 </div>
 
@@ -208,10 +222,10 @@ export default function UserBankPage() {
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="text-xl font-bold text-slate-900 leading-none mb-2 truncate">{linkedBank.bankName || "My Bank"}</h4>
+                                            <h4 className="text-xl font-bold text-slate-900 leading-none mb-2 truncate">{linkedBank.bankName || t.bank}</h4>
                                             <div className="flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                                <span className="text-xs font-semibold text-emerald-600">Verified</span>
+                                                <span className="text-xs font-semibold text-emerald-600">{t.verified}</span>
                                             </div>
                                         </div>
 
@@ -227,7 +241,7 @@ export default function UserBankPage() {
                                                 }}
                                                 className="self-start text-xs font-bold text-slate-400 hover:text-orange-500 transition-all bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm active:scale-95"
                                             >
-                                                Edit
+                                                {t.edit}
                                             </button>
                                         )}
                                     </div>
@@ -236,7 +250,7 @@ export default function UserBankPage() {
                                         <div className="bg-slate-50/50 rounded-[2rem] p-7 space-y-5 border border-slate-50 relative group/info">
 
                                             <div className="flex justify-between items-center gap-4">
-                                                <span className="text-xs font-medium text-slate-400">Account Number</span>
+                                                <span className="text-xs font-medium text-slate-400">{t.accountNumberLabel}</span>
                                                 {isEditing ? (
                                                     <input
                                                         type="text"
@@ -252,7 +266,7 @@ export default function UserBankPage() {
                                             </div>
 
                                             <div className="flex justify-between items-center gap-4 border-t border-slate-100 pt-4">
-                                                <span className="text-xs font-medium text-slate-400">Holder Name</span>
+                                                <span className="text-xs font-medium text-slate-400">{t.accountNameLabel}</span>
                                                 {isEditing ? (
                                                     <input
                                                         type="text"
@@ -274,7 +288,7 @@ export default function UserBankPage() {
                                                         disabled={updating}
                                                         className="flex-1 py-3 bg-slate-100 text-slate-400 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
                                                     >
-                                                        Cancel
+                                                        {t.cancel}
                                                     </button>
                                                     <button
                                                         onClick={handleUpdateBankDetails}
@@ -284,7 +298,7 @@ export default function UserBankPage() {
                                                         {updating ? (
                                                             <Loader2 size={12} className="animate-spin" />
                                                         ) : (
-                                                            "Save Changes"
+                                                            t.saveChanges
                                                         )}
                                                     </button>
                                                 </div>
@@ -309,8 +323,8 @@ export default function UserBankPage() {
                                 </div>
 
                                 <div className="space-y-3 max-w-xs mx-auto">
-                                    <h2 className="text-2xl font-bold text-slate-900">Add Bank Account</h2>
-                                    <p className="text-sm text-slate-500 leading-relaxed px-4">Add your bank account to receive your money easily.</p>
+                                    <h2 className="text-2xl font-bold text-slate-900">{t.addBankAccount}</h2>
+                                    <p className="text-sm text-slate-500 leading-relaxed px-4">{t.addBankDesc}</p>
                                 </div>
 
                                 <button
@@ -318,7 +332,7 @@ export default function UserBankPage() {
                                     className="w-full py-5 bg-slate-900 text-white rounded-2xl text-base font-bold shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 hover:bg-black"
                                 >
                                     <Plus size={20} strokeWidth={3} />
-                                    <span>Link New Account</span>
+                                    <span>{t.linkNewAccount}</span>
                                 </button>
                             </div>
                         )
@@ -330,9 +344,9 @@ export default function UserBankPage() {
                             </div>
 
                             <div className="space-y-4 max-w-xs mx-auto px-4">
-                                <h3 className="text-2xl font-bold text-slate-900">Account Already Joined</h3>
+                                <h3 className="text-2xl font-bold text-slate-900">{t.accountJoined}</h3>
                                 <p className="text-sm text-slate-500 leading-relaxed">
-                                    You already have a bank account linked. For security, please contact our support team if you need to change it.
+                                    {t.accountJoinedDesc}
                                 </p>
                             </div>
 
@@ -340,7 +354,7 @@ export default function UserBankPage() {
                                 onClick={() => router.push("/users/service")}
                                 className="w-full py-5 bg-orange-500 text-white rounded-2xl text-base font-bold shadow-xl shadow-orange-500/20 active:scale-95 transition-all"
                             >
-                                Contact Support
+                                {t.customerSupport}
                             </button>
                         </div>
                     ) : (
@@ -351,8 +365,8 @@ export default function UserBankPage() {
                                     <Lock size={32} />
                                 </div>
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-bold text-slate-900">Add Your Bank</h2>
-                                    <p className="text-sm text-slate-500">Fill in your bank details below</p>
+                                    <h2 className="text-2xl font-bold text-slate-900">{t.addBankAccount}</h2>
+                                    <p className="text-sm text-slate-500">{t.addBankDesc}</p>
                                 </div>
                             </div>
 
@@ -360,7 +374,7 @@ export default function UserBankPage() {
                                 <div className="space-y-6">
                                     {/* Bank Selector */}
                                     <div className="space-y-3 relative">
-                                        <label className="text-sm font-medium text-slate-500 ml-4">Select Your Bank</label>
+                                        <label className="text-sm font-medium text-slate-500 ml-4">{t.selectYourBank}</label>
                                         <div
                                             onClick={() => setShowBankDropdown(!showBankDropdown)}
                                             className="relative w-full h-20 rounded-[1.8rem] bg-white border border-slate-50 hover:border-slate-200 transition-all shadow-xl shadow-slate-900/5 cursor-pointer flex items-center px-6 gap-5 group"
@@ -376,7 +390,7 @@ export default function UserBankPage() {
                                                 {formData.bankName ? (
                                                     <p className="font-bold text-sm text-slate-900 leading-none">{formData.bankName}</p>
                                                 ) : (
-                                                    <p className="font-bold text-sm text-slate-300 leading-none">Select Bank</p>
+                                                    <p className="font-bold text-sm text-slate-300 leading-none">{t.selectBank}</p>
                                                 )}
                                             </div>
                                             <ChevronDown className={`text-slate-300 transition-transform duration-500 ${showBankDropdown ? "rotate-180" : ""}`} size={20} />
@@ -427,7 +441,7 @@ export default function UserBankPage() {
                                             <input
                                                 type="text"
                                                 required
-                                                placeholder="Enter Full Name"
+                                                placeholder={t.enterFullName}
                                                 value={formData.holderName}
                                                 onChange={(e) => setFormData({ ...formData, holderName: e.target.value })}
                                                 className="w-full h-20 pl-16 pr-8 rounded-[1.8rem] bg-white border border-slate-50 focus:border-slate-900 transition-all font-bold text-sm text-slate-900 outline-none"
@@ -445,7 +459,7 @@ export default function UserBankPage() {
                                             <input
                                                 type="text"
                                                 required
-                                                placeholder="Digits Only"
+                                                placeholder={t.digitsOnly}
                                                 value={formData.accountNumber}
                                                 onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                                                 className="w-full h-20 pl-16 pr-8 rounded-[1.8rem] bg-white border border-slate-50 focus:border-slate-900 transition-all font-bold text-sm text-slate-900 outline-none font-mono"
@@ -463,7 +477,7 @@ export default function UserBankPage() {
                                         <Loader2 className="animate-spin" size={24} />
                                     ) : (
                                         <>
-                                            <span>Link Account</span>
+                                            <span>{t.linkAccount}</span>
                                             <div className="w-1.5 h-1.5 rounded-full bg-white opacity-50 shrink-0"></div>
                                         </>
                                     )}
@@ -477,7 +491,7 @@ export default function UserBankPage() {
                 <footer className="p-10 text-center relative z-10 mt-auto">
                     <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-slate-50 border border-slate-100 italic">
                         <Lock size={12} className="text-slate-300" />
-                        <span className="text-xs font-semibold text-slate-400">Safe and Secure</span>
+                        <span className="text-xs font-semibold text-slate-400">{t.safeSecure}</span>
                     </div>
                 </footer>
             </div>

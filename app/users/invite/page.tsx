@@ -9,12 +9,27 @@ import { ChevronLeft, Copy, CheckCircle2, Share2, Sparkles, Gift, Users, Wallet,
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { translations, Language } from "@/lib/translations";
+
 export default function InvitePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [referralLink, setReferralLink] = useState("");
     const [copied, setCopied] = useState(false);
     const [stats, setStats] = useState({ earned: 0, invited: 0 });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -48,7 +63,7 @@ export default function InvitePage() {
     const handleCopy = () => {
         navigator.clipboard.writeText(referralLink);
         setCopied(true);
-        toast.success("Link copied to clipboard!");
+        toast.success(t.linkCopiedToast);
         setTimeout(() => setCopied(false), 2000);
     };
 
@@ -56,8 +71,8 @@ export default function InvitePage() {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Join MSD',
-                    text: 'Join me on MSD and earn rewards!',
+                    title: t.referralTitle,
+                    text: t.joinMeDesc,
                     url: referralLink,
                 });
             } catch (error) {
@@ -95,7 +110,7 @@ export default function InvitePage() {
                     </button>
                     <div className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full">
                         <Sparkles size={14} className="text-blue-600" />
-                        <span className="text-xs font-bold text-blue-900/60">Invite</span>
+                        <span className="text-xs font-bold text-blue-900/60">{t.invite}</span>
                     </div>
                     <div className="w-10"></div>
                 </div>
@@ -109,13 +124,13 @@ export default function InvitePage() {
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-3xl font-bold text-blue-900 tracking-tight leading-tight"
+                        className="text-3xl font-bold text-blue-900 tracking-tight leading-tight uppercase"
                     >
-                        Invite Friends<br />
-                        <span className="text-green-600">Earn Rewards</span>
+                        {t.inviteFriends}<br />
+                        <span className="text-green-600">{t.earnRewards}</span>
                     </motion.h1>
                     <p className="text-sm font-medium text-slate-400 max-w-[280px] leading-relaxed">
-                        Earn rewards for every friend who joins your network.
+                        {t.inviteDesc}
                     </p>
                 </div>
 
@@ -133,7 +148,7 @@ export default function InvitePage() {
                         {/* Floating elements mock style */}
                         <div className="absolute top-6 right-6 px-4 py-2 bg-white/95 backdrop-blur-xl rounded-2xl border border-blue-100 flex items-center gap-2 shadow-lg animate-bounce-slow">
                             <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span className="text-xs font-bold text-blue-900">Bonus +20%</span>
+                            <span className="text-xs font-bold text-blue-900">{t.bonusLabel.replace("{percent}", "20")}</span>
                         </div>
                     </div>
                 </div>
@@ -144,7 +159,7 @@ export default function InvitePage() {
                         <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 text-blue-600 group-hover:scale-110 transition-transform border border-blue-100">
                             <Users size={24} />
                         </div>
-                        <span className="text-xs font-bold text-slate-300 mb-1.5">Team Size</span>
+                        <span className="text-xs font-bold text-slate-300 mb-1.5">{t.teamSize}</span>
                         <span className="text-2xl font-bold text-blue-900">{stats.invited}</span>
                     </div>
 
@@ -152,7 +167,7 @@ export default function InvitePage() {
                         <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-4 text-green-600 group-hover:scale-110 transition-transform border border-green-100">
                             <Coins size={24} />
                         </div>
-                        <span className="text-xs font-bold text-slate-300 mb-1.5">Total Earned</span>
+                        <span className="text-xs font-bold text-slate-300 mb-1.5">{t.totalEarned}</span>
                         <span className="text-2xl font-bold text-green-600">{stats.earned.toLocaleString()}</span>
                     </div>
                 </div>
@@ -161,7 +176,7 @@ export default function InvitePage() {
                 <div className="w-full bg-white rounded-[2.5rem] p-8 border border-blue-50 relative shadow-2xl shadow-blue-900/5 mb-10">
                     <div className="flex flex-col space-y-6">
                         <div className="space-y-3 px-1">
-                            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Your Invite Link</label>
+                            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">{t.yourInviteLinkLabel}</label>
                             <div className="relative group/link" onClick={handleCopy}>
                                 <div className="w-full bg-blue-50 border border-blue-100 rounded-[1.5rem] px-6 py-5 text-sm font-bold text-blue-900 truncate focus:outline-none transition-all group-hover/link:bg-blue-100 cursor-pointer">
                                     {referralLink}
@@ -181,7 +196,7 @@ export default function InvitePage() {
                                     }`}
                             >
                                 {copied ? <CheckCircle2 size={18} strokeWidth={3} /> : <Copy size={18} strokeWidth={2.5} />}
-                                {copied ? "Copied!" : "Copy Link"}
+                                {copied ? t.copiedLabel : t.copyLinkLabel}
                             </button>
                             <button
                                 onClick={handleShare}
@@ -197,15 +212,15 @@ export default function InvitePage() {
                 <div className="w-full grid grid-cols-3 gap-4 px-2 text-center mb-10">
                     <div className="space-y-3">
                         <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center mx-auto border border-blue-100">01</div>
-                        <p className="text-[10px] font-bold text-slate-400 leading-tight">Share Link</p>
+                        <p className="text-[10px] font-bold text-slate-400 leading-tight uppercase">{t.shareLinkLabel}</p>
                     </div>
                     <div className="space-y-3">
                         <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center mx-auto border border-blue-100">02</div>
-                        <p className="text-[10px] font-bold text-slate-400 leading-tight">Friends Join</p>
+                        <p className="text-[10px] font-bold text-slate-400 leading-tight uppercase">{t.friendsJoinLabel}</p>
                     </div>
                     <div className="space-y-3">
                         <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center mx-auto border border-blue-100">03</div>
-                        <p className="text-[10px] font-bold text-slate-400 leading-tight">Earn Money</p>
+                        <p className="text-[10px] font-bold text-slate-400 leading-tight uppercase">{t.earnMoneyLabel}</p>
                     </div>
                 </div>
 

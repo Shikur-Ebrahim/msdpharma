@@ -14,6 +14,7 @@ import {
     Loader2
 } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
+import { translations, Language } from "@/lib/translations";
 
 // Default fallback in case Firestore fetch fails
 const DEFAULT_PRESETS = [
@@ -31,6 +32,19 @@ function RechargeContent() {
     const [errorMsg, setErrorMsg] = useState("");
     const [presetAmounts, setPresetAmounts] = useState<number[]>(DEFAULT_PRESETS);
     const [fetchingPresets, setFetchingPresets] = useState(true);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
     useEffect(() => {
         const fetchProductPrices = async () => {
             try {
@@ -111,7 +125,7 @@ function RechargeContent() {
     const handleNext = () => {
         const numAmount = parseInt(amount);
         if (isNaN(numAmount) || numAmount < minDeposit) {
-            setErrorMsg(`Minimum deposit amount is ${minDeposit.toLocaleString()} ETB`);
+            setErrorMsg(t.minDepositError.replace("{min}", minDeposit.toLocaleString()));
             setShowErrorModal(true);
             return;
         }
@@ -135,7 +149,7 @@ function RechargeContent() {
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-xl font-bold text-blue-900">
-                    Deposit
+                    {t.deposit}
                 </h1>
                 <div className="w-12" /> {/* Spacer */}
             </header>
@@ -146,7 +160,7 @@ function RechargeContent() {
                     <div className="bg-white rounded-[3rem] p-10 shadow-xl shadow-blue-900/5 border border-blue-50 relative overflow-hidden h-64 flex flex-col justify-center">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16"></div>
 
-                        <p className="text-slate-400 text-sm font-medium mb-4">Deposit Amount</p>
+                        <p className="text-slate-400 text-sm font-medium mb-4">{t.depositAmount}</p>
                         <div className="flex items-baseline gap-4">
                             <span className="text-blue-900 text-6xl font-black tracking-tighter tabular-nums leading-none">
                                 {Number(amount).toLocaleString()}
@@ -169,7 +183,7 @@ function RechargeContent() {
                 {/* Preset Grid */}
                 <section className="space-y-6">
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="text-sm font-bold text-slate-800">Select Amount</h2>
+                        <h2 className="text-sm font-bold text-slate-800">{t.selectAmount}</h2>
                         {fetchingPresets && <Loader2 size={16} className="animate-spin text-blue-900/20" />}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -195,7 +209,7 @@ function RechargeContent() {
                 <section className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
                     <div className="flex items-center gap-2 px-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-900"></div>
-                        <h2 className="text-sm font-bold text-slate-800">Custom Amount (Min. {minDeposit.toLocaleString()})</h2>
+                        <h2 className="text-sm font-bold text-slate-800">{t.customAmountLabel.replace("{min}", minDeposit.toLocaleString())}</h2>
                     </div>
 
                     <div className="relative group">
@@ -204,7 +218,7 @@ function RechargeContent() {
                         </div>
                         <input
                             type="text"
-                            placeholder="Enter amount..."
+                            placeholder={t.enterAmount}
                             value={customAmount}
                             onChange={handleCustomAmountChange}
                             className="w-full bg-white border-2 border-blue-50 rounded-[2.2rem] py-8 pl-18 pr-8 text-2xl font-bold text-blue-900 placeholder:text-blue-900/10 focus:outline-none focus:border-blue-900/20 transition-all shadow-xl shadow-blue-900/5 px-16"
@@ -220,14 +234,14 @@ function RechargeContent() {
                         <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 border border-blue-100">
                             <Info size={22} />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-800">Guidelines</h3>
+                        <h3 className="text-sm font-bold text-slate-800">{t.guidelines}</h3>
                     </div>
 
                     <ul className="space-y-6">
                         {[
-                            "Verify payment accounts only through this official interface.",
-                            "Account rotations occur daily. Use fresh information for each deposit.",
-                            "Keep your transaction details secure for verification."
+                            t.guideline1,
+                            t.guideline2,
+                            t.guideline3
                         ].map((tip, i) => (
                             <li key={i} className="flex gap-4 items-start group/tip">
                                 <div className="w-6 h-6 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5 group-hover/tip:bg-blue-900 group-hover/tip:text-white transition-all">
@@ -245,7 +259,7 @@ function RechargeContent() {
                         onClick={handleNext}
                         className="w-full bg-orange-500 text-white py-7 rounded-[2.2rem] font-bold text-lg shadow-xl shadow-orange-500/20 hover:shadow-2xl hover:bg-orange-600 transition-all duration-500 flex items-center justify-center gap-4 group"
                     >
-                        <span>Next Step</span>
+                        <span>{t.nextStep}</span>
                         <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform duration-300" />
                     </button>
                 </div>
@@ -263,7 +277,7 @@ function RechargeContent() {
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-2xl font-bold text-blue-900">Alert</h2>
+                                <h2 className="text-2xl font-bold text-blue-900">{t.alertHeader}</h2>
                                 <p className="text-sm text-slate-400 leading-relaxed px-2">
                                     {errorMsg}
                                 </p>
@@ -273,7 +287,7 @@ function RechargeContent() {
                                 onClick={() => setShowErrorModal(false)}
                                 className="w-full bg-red-500 text-white py-6 rounded-[1.8rem] font-bold text-lg shadow-xl shadow-red-500/20 active:scale-95 transition-all"
                             >
-                                Ok
+                                {t.ok}
                             </button>
                         </div>
                     </div>

@@ -7,6 +7,9 @@ import { doc, getDoc, addDoc, collection } from "firebase/firestore";
 import { ChevronLeft, Landmark, Loader2, Copy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import ScreenshotUpload from "@/components/ScreenshotUpload";
+
+import { translations, Language } from "@/lib/translations";
 
 function RegularContent() {
     const router = useRouter();
@@ -17,9 +20,22 @@ function RegularContent() {
     const [loading, setLoading] = useState(true);
     const [method, setMethod] = useState<any>(null);
     const [timeLeft, setTimeLeft] = useState(1500); // 25 minutes
-    const [smsContent, setSmsContent] = useState("");
+    const [screenshotUrl, setScreenshotUrl] = useState("");
     const [copiedAccount, setCopiedAccount] = useState(false);
     const [copiedName, setCopiedName] = useState(false);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const fetchMethod = async () => {
@@ -28,11 +44,11 @@ function RegularContent() {
                 const docRef = doc(db, "paymentMethods", methodId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) setMethod(docSnap.data());
-            } catch (error) { toast.error("Failed to load details"); }
+            } catch (error) { toast.error(t.failedToLoadDetails); }
             finally { setLoading(false); }
         };
         fetchMethod();
-    }, [methodId]);
+    }, [methodId, t.failedToLoadDetails]);
 
     useEffect(() => {
         if (timeLeft <= 0) return;
@@ -61,12 +77,12 @@ function RegularContent() {
             setCopiedName(true);
             setTimeout(() => setCopiedName(false), 2000);
         }
-        toast.success("Copied");
+        toast.success(t.copy);
     };
 
     const handleSubmit = async () => {
-        if (!smsContent.trim()) {
-            toast.error("Please enter the FT code or SMS");
+        if (!screenshotUrl.trim()) {
+            toast.error(t.uploadScreenshotError);
             return;
         }
 
@@ -78,7 +94,7 @@ function RegularContent() {
                 paymentMethod: "regular",
                 bankName: method?.bankName || "",
                 amount: Number(amount),
-                FTcode: smsContent,
+                screenshotUrl: screenshotUrl,
                 accountHolderName: method?.holderName || "",
                 accountNumber: method?.accountNumber || "",
                 status: "Under Review",
@@ -86,10 +102,10 @@ function RegularContent() {
                 timestamp: new Date()
             });
 
-            toast.success("Submitted!");
+            toast.success(t.submitted);
             router.push("/users/transaction-pending?theme=regular");
         } catch (error) {
-            toast.error("Error submitting");
+            toast.error(t.errorSubmitting);
         }
     };
 
@@ -111,7 +127,7 @@ function RegularContent() {
                         >
                             <ChevronLeft className="text-white" size={28} />
                         </button>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Deposit</h1>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">{t.deposit}</h1>
                         <div className="w-12" />
                     </div>
 
@@ -122,18 +138,13 @@ function RegularContent() {
                                 <Clock className="text-white" size={24} />
                             </div>
                             <div>
-                                <p className="text-white/60 text-xs font-bold uppercase tracking-wider">ORDER</p>
-                                <p className="text-white text-lg font-bold">Remaining</p>
+                                <p className="text-white text-lg font-bold">{t.remaining}</p>
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <div className="bg-white/20 px-4 py-2 rounded-xl text-center min-w-[60px]">
                                 <span className="text-white text-2xl font-bold">{m}</span>
-                                <p className="text-white/40 text-[10px] uppercase font-bold">MIN</p>
-                            </div>
-                            <div className="bg-white/20 px-4 py-2 rounded-xl text-center min-w-[60px]">
-                                <span className="text-white text-2xl font-bold">{s}</span>
-                                <p className="text-white/40 text-[10px] uppercase font-bold">SEC</p>
+                                <p className="text-white/40 text-[10px] uppercase font-bold">{t.seconds}</p>
                             </div>
                         </div>
                     </div>
@@ -143,17 +154,17 @@ function RegularContent() {
             <main className="max-w-lg mx-auto px-6 -mt-8 space-y-8">
                 {/* Step 1: Instruction Card */}
                 <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-slate-800 ml-2">Step 1</h3>
+                    <h3 className="text-2xl font-bold text-slate-800 ml-2">{t.stepOne}</h3>
                     <div className="bg-[#000000] rounded-[2.5rem] p-8 shadow-xl">
                         <p className="text-white text-sm leading-relaxed font-medium">
-                            Please copy the account number below and transfer the money using this account number. The transfer amount must be the same as the selected deposit amount. After the transfer, please send the FT code or the full transaction message in the FT send section. If the transfer amount does not match, the system will block the deposit.
+                            {t.depositStepOneDesc}
                         </p>
                     </div>
                 </div>
 
                 {/* Amount Card */}
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50 space-y-2">
-                    <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">ORDER AMOUNT</span>
+                    <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">{t.orderAmount}</span>
                     <p className="text-4xl font-black text-[#10B981]">
                         ETB {Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
@@ -163,7 +174,7 @@ function RegularContent() {
                 <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-slate-100 space-y-8">
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-400 text-sm font-medium">Payment Channel</span>
+                            <span className="text-slate-400 text-sm font-medium">{t.paymentChannel}</span>
                             <button
                                 onClick={() => router.push('/users/payment-method')}
                                 className="px-4 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-slate-400 text-xs font-medium"
@@ -173,7 +184,7 @@ function RegularContent() {
                         </div>
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold text-slate-900 leading-tight">
-                                {method?.bankName || "Commercial Bank of Ethiopia (CBE)"}
+                                {method?.bankName || t.selectBank}
                             </h2>
                             <div className="w-14 h-14 rounded-2xl bg-white p-2 border border-slate-50 shadow-sm flex items-center justify-center">
                                 {method?.bankLogoUrl ? (
@@ -187,33 +198,33 @@ function RegularContent() {
 
                     <div className="space-y-6 pt-4 border-t border-slate-50">
                         <div className="space-y-3">
-                            <span className="text-slate-400 text-sm font-medium">Account Name</span>
+                            <span className="text-slate-400 text-sm font-medium">{t.accountNameLabel}</span>
                             <div className="flex items-center justify-between gap-4">
                                 <p className="text-lg font-bold text-slate-900 flex-1 leading-tight">
-                                    {method?.holderName || "Loading..."}
+                                    {method?.holderName || t.loadingLabel}
                                 </p>
                                 <button
                                     onClick={() => handleCopy(method?.holderName, 'name')}
                                     className={`px-6 py-2 rounded-full font-bold text-sm transition-all active:scale-95 ${copiedName ? 'bg-emerald-500 text-white' : 'bg-[#E7FFF2] text-[#10B981]'
                                         }`}
                                 >
-                                    {copiedName ? "copied" : "copy"}
+                                    {copiedName ? t.copied : t.copy}
                                 </button>
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <span className="text-slate-400 text-sm font-medium">Account Number</span>
+                            <span className="text-slate-400 text-sm font-medium">{t.accountNumberLabel}</span>
                             <div className="flex items-center justify-between gap-4">
                                 <p className="text-2xl font-bold text-slate-900 font-mono tracking-tight flex-1">
-                                    {method?.accountNumber || "Loading..."}
+                                    {method?.accountNumber || t.loadingLabel}
                                 </p>
                                 <button
                                     onClick={() => handleCopy(method?.accountNumber, 'account')}
                                     className={`px-6 py-2 rounded-full font-bold text-sm transition-all active:scale-95 ${copiedAccount ? 'bg-emerald-500 text-white' : 'bg-[#E7FFF2] text-[#10B981]'
                                         }`}
                                 >
-                                    {copiedAccount ? "copied" : "copy"}
+                                    {copiedAccount ? t.copied : t.copy}
                                 </button>
                             </div>
                         </div>
@@ -222,16 +233,14 @@ function RegularContent() {
 
                 {/* Step 2 Section */}
                 <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-slate-800 ml-2">Step 2</h3>
+                    <h3 className="text-2xl font-bold text-slate-800 ml-2">{t.stepTwo}</h3>
                     <p className="text-blue-600 font-bold text-lg leading-tight ml-2">
-                        Paste payment sms Or enter TID: FT*****
+                        {t.uploadScreenshot}
                     </p>
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                        <textarea
-                            value={smsContent}
-                            onChange={(e) => setSmsContent(e.target.value)}
-                            className="w-full h-32 bg-transparent text-slate-900 text-sm font-medium placeholder:text-slate-300 resize-none outline-none"
-                            placeholder="Dear Mr your Account 1**********1122 has been debited wth ETB 350,000.00. etc..."
+                        <ScreenshotUpload
+                            onUploadSuccess={(url) => setScreenshotUrl(url)}
+                            theme="regular"
                         />
                     </div>
                 </div>
@@ -240,15 +249,15 @@ function RegularContent() {
                 <div className="pt-4">
                     <button
                         onClick={handleSubmit}
-                        disabled={!smsContent.trim()}
-                        className={`w-full h-18 rounded-2xl font-bold text-base uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 shadow-xl ${smsContent.trim()
+                        disabled={!screenshotUrl.trim()}
+                        className={`w-full h-18 rounded-2xl font-bold text-base uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 shadow-xl ${screenshotUrl.trim()
                             ? 'bg-[#E8F0ED] text-[#5A8B7B]'
                             : 'bg-slate-100 text-slate-400'
                             }`}
                     >
-                        I HAVE TRANSFERRED
+                        {t.iHaveTransferred}
                     </button>
-                    <p className="text-center mt-6 text-slate-300 text-[10px] font-bold tracking-widest uppercase">Secured by MSD System</p>
+                    <p className="text-center mt-6 text-slate-300 text-[10px] font-bold tracking-widest uppercase">{t.securedByMsd}</p>
                 </div>
             </main>
         </div>

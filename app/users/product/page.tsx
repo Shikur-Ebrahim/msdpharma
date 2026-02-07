@@ -23,6 +23,7 @@ import {
     ArrowUpRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function UserProductsPage() {
     const router = useRouter();
@@ -34,6 +35,19 @@ export default function UserProductsPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState("ALL");
     const [fetchingProducts, setFetchingProducts] = useState(true);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -113,8 +127,8 @@ export default function UserProductsPage() {
                         <ChevronLeft size={22} strokeWidth={2.5} />
                     </motion.button>
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-bold tracking-tight leading-tight text-blue-900">Pharmacy</h1>
-                        <span className="text-[10px] font-black text-blue-900/40 tracking-wider uppercase">MSD Inventory</span>
+                        <h1 className="text-xl font-bold tracking-tight leading-tight text-blue-900">{t.pharmacyFull}</h1>
+                        <span className="text-[10px] font-black text-blue-900/40 tracking-wider uppercase">{t.msdInventory}</span>
                     </div>
                 </div>
                 <motion.div
@@ -159,7 +173,7 @@ export default function UserProductsPage() {
                         {fetchingProducts ? (
                             <div className="py-32 flex flex-col items-center justify-center space-y-6">
                                 <Loader2 className="w-12 h-12 animate-spin text-green-600" />
-                                <p className="text-[10px] font-black text-blue-900/30 tracking-widest uppercase">Consulting Database</p>
+                                <p className="text-[10px] font-black text-blue-900/30 tracking-widest uppercase">{t.consulting}</p>
                             </div>
                         ) : filteredProducts.length === 0 ? (
                             <motion.div
@@ -168,7 +182,7 @@ export default function UserProductsPage() {
                                 className="py-24 flex flex-col items-center justify-center bg-blue-50/30 rounded-[3rem] border border-blue-50 text-blue-900/20"
                             >
                                 <Package size={48} className="mb-6 opacity-10" />
-                                <p className="text-[10px] font-black tracking-widest uppercase">No health products found</p>
+                                <p className="text-[10px] font-black tracking-widest uppercase">{t.noProducts}</p>
                             </motion.div>
                         ) : (
                             <div className="grid grid-cols-1 gap-8">
@@ -196,11 +210,11 @@ export default function UserProductsPage() {
                                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600"></span>
                                                                 </div>
-                                                                <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">In Stock</span>
+                                                                <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">{t.inStock}</span>
                                                             </div>
                                                             <span className="text-[10px] font-black text-blue-900">
                                                                 <span className="text-green-600">{Math.min(100, Math.round(((product.trackingCurrent || 0) / (product.trackingTarget || 100)) * 100))}%</span>
-                                                                <span className="text-blue-900/40 ml-1">Claimed</span>
+                                                                <span className="text-blue-900/40 ml-1">{t.claimed}</span>
                                                             </span>
                                                         </div>
                                                         <div className="h-2 w-full bg-blue-50 rounded-full overflow-hidden shadow-inner">
@@ -256,17 +270,17 @@ export default function UserProductsPage() {
                                                 {/* ROI Stats Grid */}
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="bg-blue-50/50 rounded-2xl p-5 border border-blue-50 flex flex-col gap-2 group-hover:bg-blue-50 transition-colors">
-                                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Daily Yield</span>
+                                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.dailyYield}</span>
                                                         <p className="text-xl font-black text-blue-900 leading-none">
                                                             {product.dailyIncome?.toLocaleString()}
                                                             <span className="text-[10px] ml-1.5 font-bold text-blue-900/30 uppercase">ETB</span>
                                                         </p>
                                                     </div>
                                                     <div className="bg-blue-50/50 rounded-2xl p-5 border border-blue-50 flex flex-col gap-2 group-hover:bg-blue-50 transition-colors">
-                                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Cycle</span>
+                                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.cycle}</span>
                                                         <p className="text-xl font-black text-blue-900 leading-none">
                                                             {product.contractPeriod}
-                                                            <span className="text-[10px] ml-1.5 font-bold text-blue-900/30 uppercase">Days</span>
+                                                            <span className="text-[10px] ml-1.5 font-bold text-blue-900/30 uppercase">{t.days}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -277,7 +291,7 @@ export default function UserProductsPage() {
                                                     whileTap={{ scale: 0.98 }}
                                                     className="w-full h-16 bg-orange-500 rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all border border-orange-400/20"
                                                 >
-                                                    <span className="text-[12px] font-black text-white tracking-[0.25em] uppercase">Buy</span>
+                                                    <span className="text-[12px] font-black text-white tracking-[0.25em] uppercase">{t.buy}</span>
                                                 </motion.button>
                                             </div>
                                         </motion.div>

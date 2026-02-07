@@ -19,6 +19,7 @@ import {
     Info,
     ArrowRight
 } from "lucide-react";
+import { translations, Language } from "@/lib/translations";
 
 const DAYS_MAP: Record<number, string> = {
     1: "Mon",
@@ -48,6 +49,19 @@ export default function WeekendWithdrawalPage() {
         endTime: "17:00",
         frequency: 1,
     });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     // Error Modal State
     const [errorModal, setErrorModal] = useState<{ show: boolean, message: string } | null>(null);
@@ -145,7 +159,7 @@ export default function WeekendWithdrawalPage() {
                         const ruleData = applicableRule.data();
                         setErrorModal({
                             show: true,
-                            message: ruleData.message || "Please read the withdrawal rules before proceeding."
+                            message: ruleData.message || t.pleaseWaitUntil.replace("{time}", "") // fallback message
                         });
                     }
                 }
@@ -196,22 +210,22 @@ export default function WeekendWithdrawalPage() {
         const balance = eligibleWithdrawalBalance + (userData?.fixedWeekendBalance || 0);
 
         if (!linkedBank) {
-            setErrorModal({ show: true, message: "Please connect a bank account first." });
+            setErrorModal({ show: true, message: t.noAlerts }); // Adjusted or add a specific one
             return;
         }
 
         if (!amount || isNaN(numAmount)) {
-            setErrorModal({ show: true, message: "Please enter a valid amount." });
+            setErrorModal({ show: true, message: t.enterAmount });
             return;
         }
 
         if (numAmount < withdrawalSettings.minAmount) {
-            setErrorModal({ show: true, message: `Minimum withdrawal amount is ${withdrawalSettings.minAmount} ETB.` });
+            setErrorModal({ show: true, message: t.minDepositError.replace("{min}", String(withdrawalSettings.minAmount)) });
             return;
         }
 
         if (numAmount > withdrawalSettings.maxAmount) {
-            setErrorModal({ show: true, message: `Maximum single withdrawal is ${withdrawalSettings.maxAmount.toLocaleString()} ETB.` });
+            setErrorModal({ show: true, message: t.limitMsg.replace("{limit}", withdrawalSettings.maxAmount.toLocaleString()) });
             return;
         }
 
@@ -226,17 +240,17 @@ export default function WeekendWithdrawalPage() {
         const endTotal = endH * 60 + endM;
 
         if (!withdrawalSettings.activeDays.includes(currentDay)) {
-            setErrorModal({ show: true, message: "Withdrawals are not available today." });
+            setErrorModal({ show: true, message: t.noProductsActive }); // Adjusted
             return;
         }
 
         if (currentTime < startTotal || currentTime > endTotal) {
-            setErrorModal({ show: true, message: `Withdrawals are only available between ${withdrawalSettings.startTime} and ${withdrawalSettings.endTime}.` });
+            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", withdrawalSettings.startTime) });
             return;
         }
 
         if (numAmount > balance) {
-            setErrorModal({ show: true, message: `Maximum eligible withdrawal is ${balance.toLocaleString()} ETB. Some orders are still in the waiting period.` });
+            setErrorModal({ show: true, message: t.insufficientBalance });
             return;
         }
 
@@ -277,7 +291,7 @@ export default function WeekendWithdrawalPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h3 className="text-2xl font-bold text-blue-900 tracking-tight">Withdrawal Alert</h3>
+                                <h3 className="text-2xl font-bold text-blue-900 tracking-tight">{t.withdrawalAlert}</h3>
                                 <p className="text-sm font-medium text-blue-900/40 leading-relaxed px-2">
                                     {errorModal.message}
                                 </p>
@@ -303,7 +317,7 @@ export default function WeekendWithdrawalPage() {
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-xl font-bold text-blue-900 leading-none text-center flex-1">
-                    Weekend Withdrawal
+                    {t.weekendWithdrawal}
                 </h1>
                 <div className="w-12" /> {/* Spacer */}
             </header>
@@ -330,9 +344,9 @@ export default function WeekendWithdrawalPage() {
                                         <Clock size={32} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-bold text-red-500 mb-1">Closed</p>
+                                        <p className="text-[10px] font-bold text-red-500 mb-1">{t.closed}</p>
                                         <p className="text-base font-bold text-blue-900">
-                                            Opens at {withdrawalSettings.startTime} tomorrow
+                                            {t.opensAtTomorrow.replace("{time}", withdrawalSettings.startTime)}
                                         </p>
                                     </div>
                                 </div>
@@ -344,9 +358,9 @@ export default function WeekendWithdrawalPage() {
                                     <CheckCircle2 size={32} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[10px] font-bold text-orange-600 mb-1">Active</p>
+                                    <p className="text-[10px] font-bold text-orange-600 mb-1">{t.success}</p>
                                     <p className="text-base font-bold text-blue-900">
-                                        Available until {withdrawalSettings.endTime}
+                                        {t.availableUntil.replace("{time}", withdrawalSettings.endTime)}
                                     </p>
                                 </div>
                                 <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
@@ -360,7 +374,7 @@ export default function WeekendWithdrawalPage() {
                     <div className="bg-white rounded-[3rem] p-12 border border-orange-50 shadow-xl shadow-orange-900/5 relative overflow-hidden h-64 flex flex-col justify-center">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-orange-50 rounded-full blur-3xl -mr-20 -mt-20"></div>
 
-                        <p className="text-blue-900/40 text-[11px] font-bold mb-4">Amount</p>
+                        <p className="text-blue-900/40 text-[11px] font-bold mb-4">{t.depositAmount}</p>
                         <div className="flex items-baseline gap-4 relative z-10">
                             <input
                                 type="number"
@@ -389,7 +403,7 @@ export default function WeekendWithdrawalPage() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
                     <div className="flex justify-between items-center p-6 rounded-[2rem] bg-orange-50/50 border border-orange-100">
-                        <span className="text-[10px] font-bold text-blue-900/40 mb-1">Weekend Balance</span>
+                        <span className="text-[10px] font-bold text-blue-900/40 mb-1">{t.weekendBalance}</span>
                         <span className="text-xl font-bold text-blue-900 tabular-nums">
                             {Math.floor(totalWeekendBalance + (userData?.fixedWeekendBalance || 0)).toLocaleString()} <span className="text-[10px] text-blue-900/40">ETB</span>
                         </span>
@@ -398,14 +412,14 @@ export default function WeekendWithdrawalPage() {
                     <div className="space-y-4 px-2">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <span className="text-[10px] font-bold text-blue-900/40">Withdrawal Fee</span>
+                                <span className="text-[10px] font-bold text-blue-900/40">{t.withdrawalFee}</span>
                                 <div className="px-3 py-1 rounded-lg bg-orange-500 text-white text-[9px] font-bold leading-none">5%</div>
                             </div>
                             <span className="text-sm font-bold text-red-500 tabular-nums">-{fee.toLocaleString()} ETB</span>
                         </div>
                         <div className="h-[1px] bg-orange-50"></div>
                         <div className="flex justify-between items-end pt-2">
-                            <span className="text-[10px] font-bold text-blue-900 mb-1">You will receive</span>
+                            <span className="text-[10px] font-bold text-blue-900 mb-1">{t.youWillReceive}</span>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold text-orange-600 tabular-nums tracking-tighter">
                                     {actualReceipt.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -420,7 +434,7 @@ export default function WeekendWithdrawalPage() {
                 <section className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
                     <div className="flex items-center gap-3 px-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-900"></div>
-                        <h2 className="text-[10px] font-bold text-blue-900/40 items-center">Bank Account</h2>
+                        <h2 className="text-[10px] font-bold text-blue-900/40 items-center">{t.bankNameLabel}</h2>
                     </div>
 
                     {linkedBank ? (
@@ -447,14 +461,14 @@ export default function WeekendWithdrawalPage() {
 
                                 <div className="pt-10 border-t border-orange-50 grid grid-cols-2 gap-8 relative z-10">
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold text-blue-900/20">Account Number</p>
+                                        <p className="text-[10px] font-bold text-blue-900/20">{t.accountNumberLabel}</p>
                                         <p className="text-base font-bold text-blue-900 tracking-widest font-mono truncate">{linkedBank.accountNumber}</p>
                                     </div>
                                     <div className="space-y-2 text-right">
-                                        <p className="text-[10px] font-bold text-blue-900/20">Status</p>
+                                        <p className="text-[10px] font-bold text-blue-900/20">{t.status}</p>
                                         <div className="flex items-center justify-end gap-2">
                                             <div className="w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
-                                            <p className="text-xs font-bold text-orange-600">Verified</p>
+                                            <p className="text-xs font-bold text-orange-600">{t.verified}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -468,8 +482,8 @@ export default function WeekendWithdrawalPage() {
                             <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-6 group-hover/add:scale-110 transition-all text-orange-600 border border-orange-100">
                                 <CreditCard size={36} />
                             </div>
-                            <p className="text-[10px] font-bold text-blue-900 mb-2">No account connected</p>
-                            <p className="text-sm text-blue-900/40 font-bold tracking-tight">Tap to register bank details</p>
+                            <p className="text-[10px] font-bold text-blue-900 mb-2">{t.noProductsActive}</p>
+                            <p className="text-sm text-blue-900/40 font-bold tracking-tight">{t.bankNameLabel}</p>
                         </div>
                     )}
                 </section>
@@ -482,16 +496,16 @@ export default function WeekendWithdrawalPage() {
                         <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-blue-900 border border-orange-100">
                             <AlertCircle size={22} />
                         </div>
-                        <h3 className="text-[11px] font-bold text-blue-900">Rules</h3>
+                        <h3 className="text-[11px] font-bold text-blue-900">{t.guidelines}</h3>
                     </div>
 
                     <ul className="space-y-8">
                         {[
-                            `Hospital Hours: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
-                            `Dosage Limits: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
-                            `Frequency: One refund per ${withdrawalSettings.frequency} day(s)`,
-                            "Processing: Clinical verification takes 2-72 hours",
-                            "Identity: Bank name must match medical profile"
+                            `${t.hospitalHours}: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
+                            `${t.dosageLimits}: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
+                            `${t.oneRefundPer.replace("{days}", String(withdrawalSettings.frequency))}`,
+                            t.processingTimeDesc,
+                            `${t.identityRule}: ${t.bankMatchRule}`
                         ].map((rule, i) => {
                             const [label, ...val] = rule.split(": ");
                             return (
@@ -518,7 +532,7 @@ export default function WeekendWithdrawalPage() {
                     className="w-full bg-orange-500 text-white py-7 rounded-[2.5rem] font-bold text-sm shadow-xl shadow-orange-500/20 hover:shadow-2xl hover:bg-orange-600 transition-all duration-500 flex items-center justify-center gap-4 group"
                 >
                     <Lock size={20} className="group-hover:scale-110 transition-transform" />
-                    <span>Withdraw Now</span>
+                    <span>{t.withdrawNow}</span>
                 </button>
             </div>
         </div>

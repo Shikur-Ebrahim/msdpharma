@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
@@ -8,6 +8,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { ChevronLeft, Lock, Eye, EyeOff, Shield, CheckCircle2, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function ChangePasswordPage() {
     const router = useRouter();
@@ -19,6 +20,19 @@ export default function ChangePasswordPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,26 +40,26 @@ export default function ChangePasswordPage() {
 
         try {
             if (!currentPassword || !newPassword || !confirmPassword) {
-                toast.error("All fields are required");
+                toast.error(t.allFieldsRequired);
                 setLoading(false);
                 return;
             }
 
             if (newPassword.length < 6) {
-                toast.error("New password must be at least 6 characters");
+                toast.error(t.passwordMinLength);
                 setLoading(false);
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                toast.error("Passwords do not match");
+                toast.error(t.passwordsDoNotMatch);
                 setLoading(false);
                 return;
             }
 
             const user = auth.currentUser;
             if (!user || !user.email) {
-                toast.error("Session expired. Please log in again.");
+                toast.error(t.sessionExpired);
                 router.push("/");
                 return;
             }
@@ -57,13 +71,13 @@ export default function ChangePasswordPage() {
             await addDoc(collection(db, "UserNotifications"), {
                 userId: user.uid,
                 type: "security_update",
-                message: "Password changed successfully",
+                message: t.passwordChangedSuccess,
                 createdAt: new Date(),
                 read: false
             });
 
             setSuccess(true);
-            toast.success("Password updated!");
+            toast.success(t.passwordUpdated);
 
             setTimeout(() => {
                 router.push("/users/profile");
@@ -72,9 +86,9 @@ export default function ChangePasswordPage() {
         } catch (error: any) {
             console.error("Password update error:", error);
             if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
-                toast.error("Invalid current password");
+                toast.error(t.invalidCurrentPassword);
             } else {
-                toast.error("Something went wrong. Please try again.");
+                toast.error(t.genericError);
             }
         } finally {
             setLoading(false);
@@ -110,12 +124,12 @@ export default function ChangePasswordPage() {
                             </div>
 
                             <div className="space-y-3">
-                                <h2 className="text-3xl font-bold text-blue-900 leading-none">Password Changed</h2>
-                                <p className="text-sm font-semibold text-green-600">Success</p>
+                                <h2 className="text-3xl font-bold text-blue-900 leading-none">{t.passwordChangedTitle}</h2>
+                                <p className="text-sm font-semibold text-green-600">{t.success}</p>
                             </div>
 
                             <p className="text-sm text-blue-900/60 leading-relaxed px-4">
-                                Your password has been successfully updated. Redirecting to your profile...
+                                {t.passwordUpdateRedirect}
                             </p>
 
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" strokeWidth={3} />
@@ -134,8 +148,8 @@ export default function ChangePasswordPage() {
                         <ChevronLeft size={22} className="text-blue-900 group-hover:-translate-x-0.5 transition-transform" />
                     </button>
                     <div className="flex flex-col">
-                        <h1 className="text-lg font-bold text-blue-900 leading-none">Change Password</h1>
-                        <span className="text-[10px] font-medium text-blue-900/40 mt-1">Update your account password</span>
+                        <h1 className="text-lg font-bold text-blue-900 leading-none">{t.changePassword}</h1>
+                        <span className="text-[10px] font-medium text-blue-900/40 mt-1">{t.updateAccountPassword}</span>
                     </div>
                 </div>
                 <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
@@ -152,9 +166,9 @@ export default function ChangePasswordPage() {
                             <KeyRound size={28} strokeWidth={2.5} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xs font-bold text-white/60">Security Rules</h3>
+                            <h3 className="text-xs font-bold text-white/60">{t.securityRules}</h3>
                             <p className="text-xs text-white/40 leading-relaxed">
-                                Choose a strong password. At least 6 characters are required for your security.
+                                {t.passwordSecurityDesc}
                             </p>
                         </div>
                     </div>
@@ -164,9 +178,9 @@ export default function ChangePasswordPage() {
                 <form onSubmit={handleChangePassword} className="space-y-8 pb-32">
                     {/* Inputs */}
                     {[
-                        { label: "Current Password", value: currentPassword, setter: setCurrentPassword, show: showCurrentPassword, setShow: setShowCurrentPassword, placeholder: "Enter current password" },
-                        { label: "New Password", value: newPassword, setter: setNewPassword, show: showNewPassword, setShow: setShowNewPassword, placeholder: "Enter new password" },
-                        { label: "Confirm New Password", value: confirmPassword, setter: setConfirmPassword, show: showConfirmPassword, setShow: setShowConfirmPassword, placeholder: "Enter new password again" }
+                        { label: t.currentPassword, value: currentPassword, setter: setCurrentPassword, show: showCurrentPassword, setShow: setShowCurrentPassword, placeholder: t.enterCurrentPassword },
+                        { label: t.newPassword, value: newPassword, setter: setNewPassword, show: showNewPassword, setShow: setShowNewPassword, placeholder: t.enterNewPassword },
+                        { label: t.confirmNewPassword, value: confirmPassword, setter: setConfirmPassword, show: showConfirmPassword, setShow: setShowConfirmPassword, placeholder: t.enterNewPasswordAgain }
                     ].map((field, i) => (
                         <div key={i} className="space-y-3">
                             <label className="text-sm font-medium text-blue-900/60 pl-2">
@@ -196,12 +210,12 @@ export default function ChangePasswordPage() {
 
                     {/* Requirements */}
                     <div className="bg-white rounded-[2rem] p-8 border border-blue-50 shadow-inner space-y-5">
-                        <span className="text-[11px] font-bold text-blue-900/20 block mb-2">Password Requirements:</span>
+                        <span className="text-[11px] font-bold text-blue-900/20 block mb-2">{t.passwordRequirements}</span>
                         <div className="grid grid-cols-1 gap-4">
                             {[
-                                { met: newPassword.length >= 6, text: "At least 6 characters" },
-                                { met: newPassword && confirmPassword && newPassword === confirmPassword, text: "Passwords match" },
-                                { met: newPassword && currentPassword && newPassword !== currentPassword, text: "Different from current password" }
+                                { met: newPassword.length >= 6, text: t.atLeast6Chars },
+                                { met: newPassword && confirmPassword && newPassword === confirmPassword, text: t.passwordsMatch },
+                                { met: newPassword && currentPassword && newPassword !== currentPassword, text: t.diffFromCurrent }
                             ].map((req, idx) => (
                                 <div key={idx} className={`flex items-center gap-4 transition-all duration-500 ${req.met ? 'translate-x-1' : 'opacity-40'}`}>
                                     <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${req.met ? 'bg-green-50 border-green-200 text-green-600' : 'border-blue-100 text-blue-900/20'}`}>
@@ -222,12 +236,12 @@ export default function ChangePasswordPage() {
                         {loading ? (
                             <>
                                 <Loader2 size={24} className="animate-spin" strokeWidth={2.5} />
-                                <span className="animate-pulse">Saving...</span>
+                                <span className="animate-pulse">{t.saving}</span>
                             </>
                         ) : (
                             <>
                                 <Shield size={22} strokeWidth={2.5} />
-                                <span>Change Password</span>
+                                <span>{t.changePassword}</span>
                             </>
                         )}
                     </button>

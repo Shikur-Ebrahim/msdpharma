@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 function ChangePasswordContent() {
     const router = useRouter();
@@ -45,6 +46,19 @@ function ChangePasswordContent() {
     const [shake, setShake] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -89,18 +103,18 @@ function ChangePasswordContent() {
         try {
             if (step === "enter_old") {
                 if (input === existingPass) {
-                    toast.success("Verified");
+                    toast.success(t.verified);
                     setStep("create_new");
                     setInput("");
                 } else {
                     triggerShake();
-                    setErrorMsg("Invalid PIN! Please try again.");
+                    setErrorMsg(t.invalidPinRetry);
                     setInput("");
                 }
                 setSubmitting(false);
             } else if (step === "create_new") {
                 if (hasExistingPass && input === existingPass) {
-                    setErrorMsg("New PIN must be different.");
+                    setErrorMsg(t.newPinDifferent);
                     triggerShake();
                     setInput("");
                     setSubmitting(false);
@@ -119,7 +133,7 @@ function ChangePasswordContent() {
                     setShowSuccess(true);
                 } else {
                     triggerShake();
-                    setErrorMsg("PIN mismatch. Please try again.");
+                    setErrorMsg(t.pinMismatchRetry);
                     setInput("");
                     setSubmitting(false);
                 }
@@ -127,7 +141,7 @@ function ChangePasswordContent() {
 
         } catch (error) {
             console.error(error);
-            toast.error("System error");
+            toast.error(t.genericError);
             setSubmitting(false);
         }
     };
@@ -166,9 +180,9 @@ function ChangePasswordContent() {
                     </div>
 
                     <div className="space-y-3">
-                        <h2 className="text-2xl font-bold text-blue-900 leading-none">PIN Updated</h2>
+                        <h2 className="text-2xl font-bold text-blue-900 leading-none">{t.pinUpdatedTitle}</h2>
                         <p className="text-sm text-blue-900/40 leading-relaxed">
-                            Your withdrawal PIN has been updated successfully.
+                            {t.pinUpdatedDesc}
                         </p>
                     </div>
 
@@ -177,7 +191,7 @@ function ChangePasswordContent() {
                             onClick={() => router.back()}
                             className="w-full h-14 bg-blue-900 hover:bg-blue-950 text-white rounded-2xl font-bold transition-all active:scale-95"
                         >
-                            Done
+                            {t.finish}
                         </button>
                     </div>
                 </motion.div>
@@ -216,10 +230,10 @@ function ChangePasswordContent() {
             {/* Title & Instructions */}
             <div className="space-y-2 mb-10 max-w-xs mx-auto relative z-10 text-center">
                 <h2 className="text-3xl font-bold text-blue-900 leading-none">
-                    {step === "enter_old" ? "Verify PIN" : step === "create_new" ? "Create PIN" : "Confirm PIN"}
+                    {step === "enter_old" ? t.verifyPinTitle : step === "create_new" ? t.createPinTitle : t.confirmPinTitle}
                 </h2>
                 <p className="text-sm font-medium text-blue-900/40 leading-relaxed px-4">
-                    {step === "enter_old" ? "Enter your current 4-digit PIN." : step === "create_new" ? "Enter your new 4-digit PIN." : "Enter your new PIN again to confirm."}
+                    {step === "enter_old" ? t.enterOldPinDesc : step === "create_new" ? t.enterNewPinDesc : t.confirmNewPinDesc}
                 </p>
             </div>
 
@@ -291,7 +305,7 @@ function ChangePasswordContent() {
                     ) : (
                         <>
                             <Shield size={20} />
-                            <span>Confirm PIN</span>
+                            <span>{t.confirmPinTitle}</span>
                         </>
                     )}
                 </button>
@@ -312,7 +326,7 @@ function ChangePasswordContent() {
 
             {/* Bottom Logistics */}
             <div className="fixed bottom-10 left-0 right-0 flex justify-center pointer-events-none opacity-20 z-0 select-none">
-                <span className="text-[10px] font-semibold text-blue-900">Secure PIN Setup</span>
+                <span className="text-[10px] font-semibold text-blue-900">{t.securePinSetup}</span>
             </div>
         </div>
     );

@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, doc, getDoc } from "firebase/firesto
 import { onAuthStateChanged } from "firebase/auth";
 import { ChevronLeft, Users, Trophy, Wallet, UserCircle, Search, Layers, Star, Coins, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { translations, Language } from "@/lib/translations";
 
 interface TeamMember {
     uid: string;
@@ -39,6 +40,26 @@ export default function TeamPage() {
         levelAssets: { A: 0, B: 0, C: 0, D: 0 }
     });
     const [rates, setRates] = useState({ levelA: 12, levelB: 7, levelC: 4, levelD: 2 });
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
+
+    const tabs = [
+        { id: 'A', label: t.levelOne, pct: `${rates.levelA}%` },
+        { id: 'B', label: t.levelTwo, pct: `${rates.levelB}%` },
+        { id: 'C', label: t.levelThree, pct: `${rates.levelC}%` },
+        { id: 'D', label: t.levelFour, pct: `${rates.levelD}%` },
+    ];
 
     useEffect(() => {
         setMounted(true);
@@ -146,13 +167,6 @@ export default function TeamPage() {
         };
     }, [router, mounted]);
 
-    const tabs = [
-        { id: 'A', label: 'Level 1', pct: `${rates.levelA}%` },
-        { id: 'B', label: 'Level 2', pct: `${rates.levelB}%` },
-        { id: 'C', label: 'Level 3', pct: `${rates.levelC}%` },
-        { id: 'D', label: 'Level 4', pct: `${rates.levelD}%` },
-    ];
-
     const formatPhone = (phone: string) => {
         if (phone.length < 6) return phone;
         return phone.substring(0, 4) + "****" + phone.substring(phone.length - 2);
@@ -188,7 +202,7 @@ export default function TeamPage() {
                     >
                         <ChevronLeft size={22} />
                     </button>
-                    <h1 className="text-lg font-bold text-blue-900 leading-none">My Team</h1>
+                    <h1 className="text-lg font-bold text-blue-900 leading-none">{t.myTeam}</h1>
                     <div className="w-10" />
                 </div>
             </div>
@@ -232,7 +246,7 @@ export default function TeamPage() {
                                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-2 border border-blue-100">
                                     <Trophy size={18} className="text-blue-600" />
                                 </div>
-                                <span className="text-[10px] font-bold text-blue-900/40 mb-1">Sales</span>
+                                <span className="text-[10px] font-bold text-blue-900/40 mb-1">{t.sales}</span>
                                 <span className="font-bold text-blue-900 text-sm tabular-nums leading-none">
                                     {stats.totalTeamRecharge >= 1000000 ? (stats.totalTeamRecharge / 1000000).toFixed(1) + "M" : stats.totalTeamRecharge.toLocaleString()}
                                 </span>
@@ -243,7 +257,7 @@ export default function TeamPage() {
                         <div className="flex-1 w-full space-y-6">
                             <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-50">
                                 <div className="text-[10px] font-bold text-blue-900/40 mb-4 flex items-center gap-2">
-                                    Total Income <div className="h-[1px] flex-1 bg-blue-100"></div>
+                                    {t.totalIncome} <div className="h-[1px] flex-1 bg-blue-100"></div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <p className="text-4xl font-bold text-blue-900 tabular-nums leading-none tracking-tighter">
@@ -257,14 +271,14 @@ export default function TeamPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-blue-50/50 p-5 rounded-[1.5rem] border border-blue-50">
-                                    <span className="text-[10px] text-blue-900/40 font-bold block mb-3">Joined Today</span>
+                                    <span className="text-[10px] text-blue-900/40 font-bold block mb-3">{t.joinedToday}</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                         <span className="font-bold text-blue-900 text-lg">+{stats.todayJoined}</span>
                                     </div>
                                 </div>
                                 <div className="bg-blue-50/50 p-5 rounded-[1.5rem] border border-blue-50">
-                                    <span className="text-[10px] text-blue-900/40 font-bold block mb-3">Total Members</span>
+                                    <span className="text-[10px] text-blue-900/40 font-bold block mb-3">{t.totalMembers}</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                                         <span className="font-bold text-blue-900 text-lg">{stats.totalMembers}</span>
@@ -289,8 +303,8 @@ export default function TeamPage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-900/40 to-transparent"></div>
                     <div className="absolute inset-0 flex items-center justify-between px-8">
                         <div>
-                            <h3 className="text-white font-bold text-lg tracking-tight">Invite Friends</h3>
-                            <p className="text-blue-200 text-[10px] font-bold mt-1">Share your link</p>
+                            <h3 className="text-white font-bold text-lg tracking-tight">{t.inviteFriends}</h3>
+                            <p className="text-blue-200 text-[10px] font-bold mt-1">{t.shareYourLink}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
                             <ChevronLeft size={20} className="rotate-180 text-white" />
@@ -301,8 +315,8 @@ export default function TeamPage() {
                 {/* Level Selectors */}
                 <div className="space-y-4 z-10 relative">
                     <div className="flex items-center justify-between px-2">
-                        <h3 className="text-[10px] font-bold text-blue-900/40">Levels</h3>
-                        <div className="text-[10px] font-bold text-green-600">Rate: {rates[`level${activeTab}` as keyof typeof rates]}%</div>
+                        <h3 className="text-[10px] font-bold text-blue-900/40">{t.levels}</h3>
+                        <div className="text-[10px] font-bold text-green-600">{t.rateLabel.replace("{rate}", String(rates[`level${activeTab}` as keyof typeof rates]))}</div>
                     </div>
 
                     <div className="bg-blue-50/50 p-1.5 rounded-[1.8rem] border border-blue-100 flex shadow-inner">
@@ -329,7 +343,7 @@ export default function TeamPage() {
                                 <Search size={24} />
                             </div>
                             <div>
-                                <p className="text-[11px] font-bold text-blue-900/30">No members found</p>
+                                <p className="text-[11px] font-bold text-blue-900/30">{t.noMembersFound}</p>
                             </div>
                         </div>
                     ) : (
@@ -355,7 +369,7 @@ export default function TeamPage() {
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center gap-2">
                                             <span className="px-2 py-0.5 rounded-lg bg-blue-50 border border-blue-100/50 text-[9px] font-bold text-blue-900/40">
-                                                Deposits {member.totalRecharge > 999 ? (member.totalRecharge / 1000).toFixed(1) + 'k' : member.totalRecharge}
+                                                {t.depositsAmount.replace("{amount}", member.totalRecharge > 999 ? (member.totalRecharge / 1000).toFixed(1) + 'k' : String(member.totalRecharge))}
                                             </span>
                                         </div>
                                         <span className="text-[9px] font-bold text-blue-900/20">

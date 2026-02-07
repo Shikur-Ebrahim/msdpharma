@@ -24,6 +24,8 @@ import {
 import { useSearchParams } from "next/navigation";
 import VipCelebrationCard from "@/components/VipCelebrationCard";
 import WeekendNotificationModal from "@/components/WeekendNotificationModal";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { translations, Language } from "@/lib/translations";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Suspense } from "react";
@@ -56,8 +58,21 @@ function WelcomeContent() {
     // Weekend Notification State
     const [showWeekendNotif, setShowWeekendNotif] = useState(false);
     const [weekendNotifData, setWeekendNotifData] = useState<any>(null);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
 
     const searchParams = useSearchParams();
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -383,7 +398,7 @@ function WelcomeContent() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-white">
                 <Loader2 className="w-12 h-12 animate-spin text-green-600" />
-                <p className="mt-8 text-sm font-black tracking-widest text-blue-900/40 uppercase">Safe & Secure</p>
+                <p className="mt-8 text-sm font-black tracking-widest text-blue-900/40 uppercase">{t.safeSecure}</p>
             </div>
         );
     }
@@ -407,14 +422,15 @@ function WelcomeContent() {
                         <img src="/msd-logo.png" alt="MSD Logo" className="w-full h-full object-contain p-1" />
                     </motion.div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Healthcare</span>
+                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.healthcare}</span>
                         <span className="text-sm font-bold text-blue-900">
-                            {userData?.email?.split('@')[0] || "Member"}
+                            {userData?.email?.split('@')[0] || t.member}
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <LanguageSwitcher />
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => {
@@ -434,8 +450,8 @@ function WelcomeContent() {
                         {showNotifPanel && (
                             <div className="absolute top-full right-0 mt-4 w-72 bg-white rounded-3xl shadow-2xl border border-blue-50 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <div className="p-4 flex items-center justify-between border-b border-blue-50 mb-2">
-                                    <h4 className="text-sm font-black text-blue-900 uppercase tracking-widest">Pharmacy Alerts</h4>
-                                    <span className="text-[9px] bg-green-100 px-2 py-1 rounded-full font-black text-green-700 uppercase tracking-widest">New</span>
+                                    <h4 className="text-sm font-black text-blue-900 uppercase tracking-widest">{t.alerts}</h4>
+                                    <span className="text-[9px] bg-green-100 px-2 py-1 rounded-full font-black text-green-700 uppercase tracking-widest">{t.new}</span>
                                 </div>
                                 <div className="max-h-80 overflow-y-auto p-1 space-y-2">
                                     {(() => {
@@ -523,11 +539,11 @@ function WelcomeContent() {
                             <section className="space-y-6 pt-4">
                                 <div className="flex items-center justify-between gap-3 px-1">
                                     <div className="flex items-center gap-3">
-                                        <h3 className="text-xs font-black text-blue-900/40 uppercase tracking-widest">Medical Wallets</h3>
+                                        <h3 className="text-xs font-black text-blue-900/40 uppercase tracking-widest">{t.medicalWallets}</h3>
                                         <div className="w-12 h-px bg-blue-50"></div>
                                     </div>
                                     <div className="flex items-baseline gap-1.5 bg-green-50 px-4 py-2 rounded-2xl border border-green-100 shadow-sm shadow-green-900/5">
-                                        <span className="text-[10px] font-black text-green-700/60 uppercase tracking-widest">Balance</span>
+                                        <span className="text-[10px] font-black text-green-700/60 uppercase tracking-widest">{t.balance}</span>
                                         <span className="text-sm font-black text-green-700">
                                             {(userData?.balance ?? userData?.Recharge ?? 0).toLocaleString()} <span className="text-[10px] font-medium text-green-700/60 ml-0.5">ETB</span>
                                         </span>
@@ -546,8 +562,8 @@ function WelcomeContent() {
                                             <Wallet size={28} />
                                         </div>
                                         <div className="flex flex-col items-start">
-                                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mb-1">Pharmacy</span>
-                                            <span className="text-xl font-black text-blue-900 tracking-tight leading-none">Deposit</span>
+                                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mb-1">{t.pharmacy}</span>
+                                            <span className="text-xl font-black text-blue-900 tracking-tight leading-none">{t.deposit}</span>
                                         </div>
                                     </motion.button>
 
@@ -562,8 +578,8 @@ function WelcomeContent() {
                                             <Coins size={28} />
                                         </div>
                                         <div className="flex flex-col items-start">
-                                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mb-1">Payout</span>
-                                            <span className="text-xl font-black text-blue-900 tracking-tight leading-none">Withdraw</span>
+                                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mb-1">{t.payout}</span>
+                                            <span className="text-xl font-black text-blue-900 tracking-tight leading-none">{t.withdraw}</span>
                                         </div>
                                     </motion.button>
                                 </div>
@@ -579,7 +595,7 @@ function WelcomeContent() {
                                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'white', color: '#FF8C42' }}>
                                             <Users size={24} />
                                         </div>
-                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Invite</span>
+                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.invite}</span>
                                     </motion.button>
 
                                     {/* Action: Rules */}
@@ -592,7 +608,7 @@ function WelcomeContent() {
                                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'white', color: '#17A2B8' }}>
                                             <Shield size={24} />
                                         </div>
-                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Levels</span>
+                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.levels}</span>
                                     </motion.button>
 
                                     {/* Action: Exchange */}
@@ -605,7 +621,7 @@ function WelcomeContent() {
                                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'white', color: '#0056B3' }}>
                                             <ArrowLeftRight size={24} />
                                         </div>
-                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">Swap</span>
+                                        <span className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest">{t.swap}</span>
                                     </motion.button>
                                 </div>
                             </section>
@@ -613,7 +629,7 @@ function WelcomeContent() {
                             {/* Products Section */}
                             <div className="space-y-6 pt-4 pb-12">
                                 <div className="flex items-center gap-3 px-1">
-                                    <h3 className="text-xs font-black text-blue-900/40 uppercase tracking-widest">Medical Solutions</h3>
+                                    <h3 className="text-xs font-black text-blue-900/40 uppercase tracking-widest">{t.solutions}</h3>
                                     <div className="flex-1 h-px bg-blue-50"></div>
                                 </div>
 
@@ -645,10 +661,10 @@ function WelcomeContent() {
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <h3 className="text-xl font-black text-blue-900 tracking-tight">{product.name}</h3>
-                                                        <p className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mt-1">Health Grade Medication</p>
+                                                        <p className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest mt-1">{t.healthGrade}</p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">Price</span>
+                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">{t.price}</span>
                                                         <span className="text-xl font-black text-green-600">
                                                             {product.price?.toLocaleString()}
                                                             <span className="text-xs ml-1 font-bold text-green-600/60 uppercase">ETB</span>
@@ -658,24 +674,24 @@ function WelcomeContent() {
 
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-50 group-hover:bg-blue-50 transition-colors">
-                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">Daily Income</span>
+                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">{t.dailyIncome}</span>
                                                         <p className="text-base font-black text-blue-900">
                                                             {product.dailyIncome?.toLocaleString()}
                                                             <span className="text-[10px] ml-1 font-bold text-blue-900/40 uppercase">ETB</span>
                                                         </p>
                                                     </div>
                                                     <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-50 group-hover:bg-blue-50 transition-colors">
-                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">Cycle</span>
+                                                        <span className="text-[10px] font-black text-black uppercase tracking-widest block mb-1">{t.cycle}</span>
                                                         <p className="text-base font-black text-blue-900">
                                                             {product.contractPeriod}
-                                                            <span className="text-[10px] ml-1 font-bold text-blue-900/40 uppercase">Days</span>
+                                                            <span className="text-[10px] ml-1 font-bold text-blue-900/40 uppercase">{t.days}</span>
                                                         </p>
                                                     </div>
                                                 </div>
 
                                                 <div className="bg-green-50/50 rounded-2xl p-4 border border-green-100/50 group-hover:bg-green-50 transition-colors flex items-center justify-between">
                                                     <div>
-                                                        <span className="text-[10px] font-black text-black uppercase tracking-[0.2em] block">Total Profit</span>
+                                                        <span className="text-[10px] font-black text-black uppercase tracking-[0.2em] block">{t.totalProfit}</span>
                                                     </div>
                                                     <p className="text-xl font-black text-green-700">
                                                         {(product.dailyIncome * product.contractPeriod).toLocaleString()}
@@ -684,7 +700,7 @@ function WelcomeContent() {
                                                 </div>
 
                                                 <button className="w-full h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/10 text-xs font-black tracking-widest uppercase transition-all hover:bg-orange-600 active:scale-95">
-                                                    Buy
+                                                    {t.buy}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -696,7 +712,7 @@ function WelcomeContent() {
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 size={32} className="animate-spin text-green-600 opacity-40" />
-                        <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-900/40">Securing medication...</p>
+                        <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-900/40">{t.securing}</p>
                     </div>
                 )}
             </main>

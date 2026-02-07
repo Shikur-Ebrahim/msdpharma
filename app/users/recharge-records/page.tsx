@@ -22,6 +22,7 @@ import {
     Zap,
     Shield
 } from "lucide-react";
+import { translations, Language } from "@/lib/translations";
 
 interface RechargeRecord {
     id: string;
@@ -45,6 +46,19 @@ export default function RechargeRecordsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<"all" | "verified" | "under review">("all");
     const [paymentMethodLogos, setPaymentMethodLogos] = useState<Record<string, string>>({});
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -128,8 +142,8 @@ export default function RechargeRecordsPage() {
             case "verified":
                 return {
                     icon: CheckCircle2,
-                    label: "Verified",
-                    bgColor: "bg-green-500",
+                    label: t.verified,
+                    bgColor: "bg-green-50",
                     textColor: "text-green-600",
                     borderColor: "border-green-100",
                     lightBg: "bg-green-50/50"
@@ -137,8 +151,8 @@ export default function RechargeRecordsPage() {
             default:
                 return {
                     icon: Clock,
-                    label: "Under Review",
-                    bgColor: "bg-orange-500",
+                    label: t.pending,
+                    bgColor: "bg-orange-50",
                     textColor: "text-orange-600",
                     borderColor: "border-orange-100",
                     lightBg: "bg-orange-50/50"
@@ -191,7 +205,7 @@ export default function RechargeRecordsPage() {
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-xl font-bold text-blue-900 leading-none">
-                    Recharge History
+                    {t.rechargeHistoryHeader}
                 </h1>
                 <div className="w-12" />
             </header>
@@ -201,7 +215,7 @@ export default function RechargeRecordsPage() {
                 <div className="grid grid-cols-2 gap-5">
                     <div className="bg-white rounded-[3rem] p-8 border border-blue-50 shadow-xl shadow-blue-900/5 relative overflow-hidden flex flex-col justify-center h-40">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full blur-2xl -mr-12 -mt-12"></div>
-                        <p className="text-xs font-bold text-blue-900/40 mb-4">Total Recharge</p>
+                        <p className="text-xs font-bold text-blue-900/40 mb-4">{t.totalRecharge}</p>
                         <div className="flex items-baseline gap-2">
                             <span className="text-2xl font-bold text-blue-900 tracking-tight tabular-nums">{stats.totalAmount.toLocaleString()}</span>
                             <span className="text-[10px] font-bold text-blue-900/40">ETB</span>
@@ -211,7 +225,7 @@ export default function RechargeRecordsPage() {
                     <div className="space-y-4">
                         <div className="bg-white rounded-[2rem] p-6 border border-green-100 shadow-xl shadow-green-900/5 flex items-center justify-between h-[calc(50%-8px)]">
                             <div>
-                                <p className="text-[10px] font-bold text-green-600/40">Success</p>
+                                <p className="text-[10px] font-bold text-green-600/40">{t.success}</p>
                                 <p className="text-lg font-bold text-blue-900">{stats.verified}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 border border-green-100">
@@ -220,7 +234,7 @@ export default function RechargeRecordsPage() {
                         </div>
                         <div className="bg-white rounded-[2rem] p-6 border border-orange-100 shadow-xl shadow-orange-900/5 flex items-center justify-between h-[calc(50%-8px)]">
                             <div>
-                                <p className="text-[10px] font-bold text-orange-600/40">Pending</p>
+                                <p className="text-[10px] font-bold text-orange-600/40">{t.pending}</p>
                                 <p className="text-lg font-bold text-blue-900">{stats.underReview}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 border border-orange-100">
@@ -233,9 +247,9 @@ export default function RechargeRecordsPage() {
                 {/* Filter Tabs */}
                 <div className="flex p-2 bg-white rounded-[2rem] shadow-xl shadow-blue-900/5 border border-blue-50">
                     {[
-                        { key: "all", label: "All" },
-                        { key: "verified", label: "Verified" },
-                        { key: "under review", label: "Pending" }
+                        { key: "all", label: t.all },
+                        { key: "verified", label: t.verified },
+                        { key: "under review", label: t.pending }
                     ].map((tab) => (
                         <button
                             key={tab.key}
@@ -257,7 +271,7 @@ export default function RechargeRecordsPage() {
                             <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto border border-blue-100">
                                 <FileText className="w-10 h-10 text-blue-900/20" />
                             </div>
-                            <p className="text-blue-900/40 font-bold text-sm">No records found</p>
+                            <p className="text-blue-900/40 font-bold text-sm">{t.recordsNotFound}</p>
                         </div>
                     ) : (
                         filteredRecords.map((record) => {
@@ -293,7 +307,7 @@ export default function RechargeRecordsPage() {
                                                 ? 'bg-green-500 text-white'
                                                 : 'bg-orange-500 text-white'
                                                 }`}>
-                                                Recharge
+                                                {t.rechargeLabel}
                                             </span>
                                         </div>
                                     </div>
@@ -303,11 +317,11 @@ export default function RechargeRecordsPage() {
                                     <div className="grid grid-cols-2 gap-6 items-end">
                                         <div className="space-y-5">
                                             <div className="flex flex-col">
-                                                <span className="text-[11px] font-bold text-blue-900/20 mb-1">Bank Name</span>
+                                                <span className="text-[11px] font-bold text-blue-900/20 mb-1">{t.bankNameLabel}</span>
                                                 <span className="text-sm font-bold text-blue-900 truncate">{record.bankName}</span>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[11px] font-bold text-blue-900/20 mb-1">Account Name</span>
+                                                <span className="text-[11px] font-bold text-blue-900/20 mb-1">{t.accountNameLabel}</span>
                                                 <span className="text-sm font-bold text-blue-900 truncate">{record.accountHolderName}</span>
                                             </div>
                                         </div>

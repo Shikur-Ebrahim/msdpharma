@@ -37,6 +37,7 @@ import {
     Star
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations, Language } from "@/lib/translations";
 
 export default function UserProductDetailPage() {
     const router = useRouter();
@@ -49,6 +50,19 @@ export default function UserProductDetailPage() {
     const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [lang, setLang] = useState<Language>("EN");
+    const t = translations[lang];
+
+    // Language Hydration
+    useEffect(() => {
+        const handleLangChange = () => {
+            const saved = localStorage.getItem("app_lang") as Language;
+            if (saved) setLang(saved);
+        };
+        handleLangChange();
+        window.addEventListener("languageChange", handleLangChange);
+        return () => window.removeEventListener("languageChange", handleLangChange);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -175,7 +189,7 @@ export default function UserProductDetailPage() {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
                 <Loader2 className="w-12 h-12 animate-spin text-green-600" />
-                <p className="mt-8 text-blue-900/40 font-black tracking-widest text-[9px] uppercase">Reviewing Medication</p>
+                <p className="mt-8 text-blue-900/40 font-black tracking-widest text-[9px] uppercase">{t.consulting}</p>
             </div>
         );
     }
@@ -186,14 +200,14 @@ export default function UserProductDetailPage() {
                 <div className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-blue-100 shadow-sm">
                     <AlertCircle size={48} className="text-blue-900/20" />
                 </div>
-                <h1 className="text-2xl font-black tracking-tight mb-4 text-blue-900">Product Not Found</h1>
-                <p className="text-blue-900/40 max-w-xs mb-10 text-[10px] font-black tracking-widest uppercase leading-relaxed">The requested medication could not be located.</p>
+                <h1 className="text-2xl font-black tracking-tight mb-4 text-blue-900">{t.noProducts}</h1>
+                <p className="text-blue-900/40 max-w-xs mb-10 text-[10px] font-black tracking-widest uppercase leading-relaxed">{t.consulting}</p>
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => router.back()}
                     className="px-12 py-5 bg-orange-500 text-white rounded-2xl font-black tracking-widest text-[10px] shadow-lg shadow-orange-500/20"
                 >
-                    BACK TO CATALOG
+                    {t.backToCatalog}
                 </motion.button>
             </div>
         );
@@ -210,8 +224,8 @@ export default function UserProductDetailPage() {
                     <ChevronLeft size={24} />
                 </button>
                 <div className="flex flex-col items-center">
-                    <h1 className="text-lg font-black text-blue-900 leading-none">Details</h1>
-                    <span className="text-[10px] font-black text-blue-900/40 tracking-widest uppercase mt-1">Pharmacy</span>
+                    <h1 className="text-lg font-black text-blue-900 leading-none">{t.details}</h1>
+                    <span className="text-[10px] font-black text-blue-900/40 tracking-widest uppercase mt-1">{t.pharmacyFull}</span>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-white border border-blue-100 flex items-center justify-center shadow-sm">
                     <img src="/msd-logo.png" alt="MSD" className="w-6 h-6 object-contain" />
@@ -231,7 +245,7 @@ export default function UserProductDetailPage() {
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-blue-50 gap-4">
                                 <Award size={64} strokeWidth={1.5} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-900/20">Health Product</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-900/20">{t.medicalSupply}</span>
                             </div>
                         )}
 
@@ -254,37 +268,37 @@ export default function UserProductDetailPage() {
                 >
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-900"></div>
-                        <h2 className="text-[10px] font-black text-blue-900/30 uppercase tracking-[0.3em]">Medication Data</h2>
+                        <h2 className="text-[10px] font-black text-blue-900/30 uppercase tracking-[0.3em]">{t.medicalWallets}</h2>
                     </div>
 
                     <div className="space-y-6">
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Scientific Tier</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.scientificTier}</span>
                             <span className="text-sm font-black text-blue-900">{product.category || "Level 1"}</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Product SKU</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.productSku}</span>
                             <span className="text-sm font-black text-blue-900">{product.name}</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Entry Price</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.entryPrice}</span>
                             <span className="text-sm font-black text-green-600">{product.price?.toLocaleString()} ETB</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Daily Yield</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.dailyYield}</span>
                             <span className="text-sm font-black text-blue-900">{product.dailyIncome?.toLocaleString()} ETB</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Cycle Period</span>
-                            <span className="text-sm font-black text-blue-900">{product.contractPeriod} Days</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.cyclePeriod}</span>
+                            <span className="text-sm font-black text-blue-900">{product.contractPeriod} {t.days}</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Total Outcome</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.totalOutcome}</span>
                             <span className="text-sm font-black text-green-600">{product.totalProfit?.toLocaleString()} ETB</span>
                         </div>
                         <div className="flex items-center justify-between pb-4 border-b border-blue-50 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">Unit Limit</span>
-                            <span className="text-sm font-black text-blue-900">{product.purchaseLimit || 1} Unit</span>
+                            <span className="text-[10px] font-black text-blue-900/30 uppercase tracking-widest">{t.unitLimit}</span>
+                            <span className="text-sm font-black text-blue-900">{product.purchaseLimit || 1} {t.unit}</span>
                         </div>
                     </div>
                 </motion.div>
@@ -302,7 +316,7 @@ export default function UserProductDetailPage() {
                                 }`}
                         >
                             {statusMsg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-                            {statusMsg.text === "INSUFFICIENT_FUNDS_SPECIAL" ? "Insufficient Wallet Balance" : statusMsg.text}
+                            {statusMsg.text === "INSUFFICIENT_FUNDS_SPECIAL" ? t.insufficientBalance : statusMsg.text}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -321,7 +335,7 @@ export default function UserProductDetailPage() {
                         <Loader2 className="animate-spin" size={20} />
                     ) : (
                         <>
-                            Buy
+                            {t.buy}
                             <ArrowRight size={18} strokeWidth={3} />
                         </>
                     )}
@@ -346,9 +360,9 @@ export default function UserProductDetailPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Congratulations!</h3>
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t.congratulations}</h3>
                                     <p className="text-sm font-medium text-slate-500 leading-relaxed px-2">
-                                        You have successfully purchased this product. You will receive daily income every day until the contract period ends. Check your earnings daily!
+                                        {t.purchaseSuccess}
                                     </p>
                                 </div>
 
@@ -357,7 +371,7 @@ export default function UserProductDetailPage() {
                                         onClick={() => router.push("/users/funding-details")}
                                         className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-900/20"
                                     >
-                                        OK
+                                        {t.ok}
                                     </button>
                                 </div>
                             </div>
@@ -384,9 +398,9 @@ export default function UserProductDetailPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Limit Reached</h3>
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t.limitReached}</h3>
                                     <p className="text-sm font-medium text-slate-500 leading-relaxed px-2">
-                                        This product is limited to <span className="text-slate-900 font-bold">{product?.purchaseLimit || 1}</span> unit(s) only. You have already purchased the maximum allowed quantity. Please explore other products.
+                                        {t.limitMsg.replace("{limit}", (product?.purchaseLimit || 1).toString())}
                                     </p>
                                 </div>
 
@@ -395,7 +409,7 @@ export default function UserProductDetailPage() {
                                         onClick={() => router.push("/users/welcome")}
                                         className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-900/20"
                                     >
-                                        OK
+                                        {t.ok}
                                     </button>
                                 </div>
                             </div>
