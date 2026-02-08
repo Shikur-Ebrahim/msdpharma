@@ -26,6 +26,18 @@ export async function syncDailyIncome(currentUserId?: string) {
         if (!currentUserId) return;
 
         const now = new Date();
+        const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday, etc.
+
+        // Fetch income settings to check active days
+        const settingsRef = doc(db, "GlobalSettings", "income");
+        const settingsSnap = await getDoc(settingsRef);
+        const activeDays = settingsSnap.exists() ? settingsSnap.data().activeDays : [1, 2, 3, 4, 5, 6];
+
+        if (!activeDays.includes(currentDay)) {
+            console.log(`[Daily Income] Today (day ${currentDay}) is not an active income day. Skipping sync.`);
+            return;
+        }
+
         const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
