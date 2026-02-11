@@ -51,83 +51,97 @@ interface GroupedUser {
 export default function RechargeTrackingPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [recharges, setRecharges] = useState<RechargeData[]>([]);
+    const [usersData, setUsersData] = useState<{ [key: string]: string }>({});
     const [groupedUsers, setGroupedUsers] = useState<GroupedUser[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<GroupedUser[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
 
+    // Fetch users mapping
     useEffect(() => {
-        // Query only verified recharges
+        const usersQuery = query(collection(db, "users"));
+        const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+            const userMap: { [key: string]: string } = {};
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.phoneNumber) {
+                    userMap[doc.id] = data.phoneNumber;
+                }
+            });
+            setUsersData(userMap);
+        });
+        return () => unsubscribeUsers();
+    }, []);
+
+    // Fetch recharges
+    useEffect(() => {
         const q = query(
             collection(db, "RechargeReview"),
             where("status", "==", "verified")
-            // Note: Composite index might be needed for orderBy('verifiedAt', 'desc') with where clause.
-            // If it fails, we can sort client-side.
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const recharges = snapshot.docs.map(doc => ({
+        const unsubscribeRecharges = onSnapshot(q, (snapshot) => {
+            const rechargeList = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as RechargeData[];
-
-            // Group by userId
-            const groups: { [key: string]: GroupedUser } = {};
-
-            recharges.forEach(recharge => {
-                const uid = recharge.userId || "unknown";
-
-                if (!groups[uid]) {
-                    groups[uid] = {
-                        userId: uid,
-                        phoneNumber: recharge.phoneNumber || "Unknown",
-                        accountHolderName: recharge.accountHolderName || "Unknown",
-                        totalAmount: 0,
-                        lastRechargeDate: new Date(0), // Init with old date
-                        recharges: []
-                    };
-                }
-
-                groups[uid].recharges.push(recharge);
-                groups[uid].totalAmount += Number(recharge.amount) || 0;
-
-                // Update last recharge date
-                let rechargeDate = new Date();
-                if (recharge.verifiedAt?.seconds) {
-                    rechargeDate = new Date(recharge.verifiedAt.seconds * 1000);
-                } else if (recharge.timestamp?.seconds) {
-                    rechargeDate = new Date(recharge.timestamp.seconds * 1000);
-                }
-
-                if (rechargeDate > groups[uid].lastRechargeDate) {
-                    groups[uid].lastRechargeDate = rechargeDate;
-                    // Also ensure latest phone/name is used if previous was generic
-                    if (recharge.phoneNumber) groups[uid].phoneNumber = recharge.phoneNumber;
-                    if (recharge.accountHolderName) groups[uid].accountHolderName = recharge.accountHolderName;
-                }
-            });
-
-            // Convert to array and sort by latest activity
-            const sortedGroups = Object.values(groups).sort((a, b) =>
-                b.lastRechargeDate.getTime() - a.lastRechargeDate.getTime()
-            );
-
-            // Sort internal recharges for each user by date desc
-            sortedGroups.forEach(group => {
-                group.recharges.sort((a, b) => {
-                    const dateA = a.verifiedAt?.seconds ? a.verifiedAt.seconds : (a.timestamp?.seconds || 0);
-                    const dateB = b.verifiedAt?.seconds ? b.verifiedAt.seconds : (b.timestamp?.seconds || 0);
-                    return dateB - dateA;
-                });
-            });
-
-            setGroupedUsers(sortedGroups);
-            setFilteredUsers(sortedGroups);
+            setRecharges(rechargeList);
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeRecharges();
     }, []);
+
+    // Group and Merge logic
+    useEffect(() => {
+        const groups: { [key: string]: GroupedUser } = {};
+
+        recharges.forEach(recharge => {
+            const uid = recharge.userId || "unknown";
+
+            if (!groups[uid]) {
+                groups[uid] = {
+                    userId: uid,
+                    phoneNumber: usersData[uid] || recharge.phoneNumber || "Unknown",
+                    accountHolderName: recharge.accountHolderName || "Unknown",
+                    totalAmount: 0,
+                    lastRechargeDate: new Date(0),
+                    recharges: []
+                };
+            }
+
+            groups[uid].recharges.push(recharge);
+            groups[uid].totalAmount += Number(recharge.amount) || 0;
+
+            let rechargeDate = new Date();
+            if (recharge.verifiedAt?.seconds) {
+                rechargeDate = new Date(recharge.verifiedAt.seconds * 1000);
+            } else if (recharge.timestamp?.seconds) {
+                rechargeDate = new Date(recharge.timestamp.seconds * 1000);
+            }
+
+            if (rechargeDate > groups[uid].lastRechargeDate) {
+                groups[uid].lastRechargeDate = rechargeDate;
+                groups[uid].phoneNumber = usersData[uid] || recharge.phoneNumber || groups[uid].phoneNumber;
+                if (recharge.accountHolderName) groups[uid].accountHolderName = recharge.accountHolderName;
+            }
+        });
+
+        const sortedGroups = Object.values(groups).sort((a, b) =>
+            b.lastRechargeDate.getTime() - a.lastRechargeDate.getTime()
+        );
+
+        sortedGroups.forEach(group => {
+            group.recharges.sort((a, b) => {
+                const dateA = a.verifiedAt?.seconds ? a.verifiedAt.seconds : (a.timestamp?.seconds || 0);
+                const dateB = b.verifiedAt?.seconds ? b.verifiedAt.seconds : (b.timestamp?.seconds || 0);
+                return dateB - dateA;
+            });
+        });
+
+        setGroupedUsers(sortedGroups);
+    }, [recharges, usersData]);
 
     // Filter logic
     useEffect(() => {

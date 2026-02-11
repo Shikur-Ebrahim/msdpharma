@@ -44,6 +44,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
     const [pendingWithdrawalCount, setPendingWithdrawalCount] = useState(0);
     const [pendingWeekendWithdrawalCount, setPendingWeekendWithdrawalCount] = useState(0);
     const [vipUpgradeCount, setVipUpgradeCount] = useState(0);
+    const [todaySalesCount, setTodaySalesCount] = useState(0);
 
     useEffect(() => {
         // Recharge Listener
@@ -82,17 +83,35 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
             setPendingWeekendWithdrawalCount(snapshot.size);
         });
 
+        // Today's Sales Listener
+        const qSales = query(
+            collection(db, "UserOrders")
+        );
+        const unsubscribeSales = onSnapshot(qSales, (snapshot) => {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+
+            const todayCount = snapshot.docs.filter(doc => {
+                const data = doc.data();
+                const purchaseDate = data.purchaseDate?.toDate ? data.purchaseDate.toDate() : new Date(data.purchaseDate);
+                return purchaseDate >= startOfToday;
+            }).length;
+            setTodaySalesCount(todayCount);
+        });
+
         return () => {
             unsubscribeRecharge();
             unsubscribeWithdrawal();
             unsubscribeVip();
             unsubscribeWeekendWithdrawal();
+            unsubscribeSales();
         };
     }, []);
 
     const navigation = [
         { id: "recharge", label: "Recharge Wallet", icon: ShieldCheck, path: "/admin/recharge-verification" },
         { id: "recharge-tracking", label: "Recharge Users", icon: TrendingUp, path: "/admin/recharge-tracking" },
+        { id: "sales-tracking", label: "Sales Tracking", icon: BarChart3, path: "/admin/sales-tracking" },
         { id: "withdrawal-wallet", label: "Withdrawal Wallet", icon: Banknote, path: "/admin/withdrawal-wallet" },
         { id: "weekend-withdrawal", label: "Weekend Withdrawal", icon: Banknote, path: "/admin/weekend-withdrawal" },
         { id: "financials", label: "Financial Stats", icon: BarChart3, path: "/admin/financials" },
@@ -208,6 +227,11 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                                     {item.id === "vip-upgrade" && vipUpgradeCount > 0 && (
                                         <span className="ml-auto bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full animate-bounce shadow-lg shadow-emerald-500/40">
                                             {vipUpgradeCount}
+                                        </span>
+                                    )}
+                                    {item.id === "sales-tracking" && todaySalesCount > 0 && (
+                                        <span className="ml-auto bg-blue-500 text-white text-[10px] font-black px-2 py-1 rounded-full animate-pulse shadow-lg shadow-blue-500/40">
+                                            {todaySalesCount}
                                         </span>
                                     )}
                                 </Link>
