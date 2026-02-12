@@ -17,9 +17,11 @@ import {
     Calendar,
     CreditCard,
     Loader2 as Loader,
-    Pencil,
     Check,
-    X
+    X,
+    TrendingUp,
+    Key,
+    Pencil
 } from "lucide-react";
 import AdminSidebar from "@/components/AdminSidebar";
 
@@ -32,6 +34,10 @@ function UsersManagement() {
     const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [editBalance, setEditBalance] = useState("");
+    const [editCredits, setEditCredits] = useState("");
+    const [editTeamIncome, setEditTeamIncome] = useState("");
+    const [editWithdrawalPassword, setEditWithdrawalPassword] = useState("");
+    const [editField, setEditField] = useState<"balance" | "credits" | "teamIncome" | "withdrawalPassword" | null>(null);
     const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
@@ -75,8 +81,60 @@ function UsersManagement() {
                 balance: Number(editBalance)
             });
             setEditingUserId(null);
+            setEditField(null);
         } catch (error) {
             console.error("Error updating balance:", error);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleUpdateCredits = async (userId: string) => {
+        if (!editCredits || isNaN(Number(editCredits))) return;
+        setUpdating(true);
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                Recharge: Number(editCredits)
+            });
+            setEditingUserId(null);
+            setEditField(null);
+        } catch (error) {
+            console.error("Error updating credits:", error);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleUpdateTeamIncome = async (userId: string) => {
+        if (!editTeamIncome || isNaN(Number(editTeamIncome))) return;
+        setUpdating(true);
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                teamIncome: Number(editTeamIncome)
+            });
+            setEditingUserId(null);
+            setEditField(null);
+        } catch (error) {
+            console.error("Error updating team income:", error);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleUpdateWithdrawalPassword = async (userId: string) => {
+        if (!editWithdrawalPassword) return; // Allow string, no isNaN check needed clearly
+        setUpdating(true);
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                withdrawalPassword: editWithdrawalPassword
+            });
+            setEditingUserId(null);
+            setEditField(null);
+        } catch (error) {
+            console.error("Error updating withdrawal password:", error);
         } finally {
             setUpdating(false);
         }
@@ -203,10 +261,143 @@ function UsersManagement() {
                                                 <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">T. Recharge</p>
                                                 <p className="text-sm font-black text-blue-600 leading-none">{user.totalRecharge || 0}</p>
                                             </div>
-                                            <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 group-hover:bg-indigo-50 transition-colors text-center">
+                                            <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 group-hover:bg-indigo-50 transition-colors text-center relative">
                                                 <BadgeCheck size={14} className="text-indigo-500 mb-1" />
                                                 <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Credits</p>
-                                                <p className="text-sm font-black text-indigo-600 leading-none">{user.Recharge || 0}</p>
+                                                {editingUserId === user.id && editField === "credits" ? (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <input
+                                                            type="number"
+                                                            value={editCredits}
+                                                            onChange={(e) => setEditCredits(e.target.value)}
+                                                            className="w-20 h-7 bg-white border border-indigo-200 rounded-lg text-xs font-black text-indigo-600 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                            autoFocus
+                                                        />
+                                                        <button
+                                                            onClick={() => handleUpdateCredits(user.id)}
+                                                            disabled={updating}
+                                                            className="p-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {updating ? <Loader size={12} className="animate-spin" /> : <Check size={12} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(null);
+                                                                setEditField(null);
+                                                            }}
+                                                            className="p-1 bg-gray-100 text-gray-500 rounded-md hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-black text-indigo-600 leading-none">{user.Recharge || 0}</p>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(user.id);
+                                                                setEditField("credits");
+                                                                setEditCredits(user.Recharge?.toString() || "0");
+                                                            }}
+                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-indigo-500 hover:bg-indigo-50"
+                                                            title="Edit Credits"
+                                                        >
+                                                            <Pencil size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-purple-50/50 border border-purple-100 group-hover:bg-purple-50 transition-colors text-center relative">
+                                                <TrendingUp size={14} className="text-purple-500 mb-1" />
+                                                <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest leading-none mb-1">Team Inc.</p>
+                                                {editingUserId === user.id && editField === "teamIncome" ? (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <input
+                                                            type="number"
+                                                            value={editTeamIncome}
+                                                            onChange={(e) => setEditTeamIncome(e.target.value)}
+                                                            className="w-20 h-7 bg-white border border-purple-200 rounded-lg text-xs font-black text-purple-600 px-2 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                                            autoFocus
+                                                        />
+                                                        <button
+                                                            onClick={() => handleUpdateTeamIncome(user.id)}
+                                                            disabled={updating}
+                                                            className="p-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {updating ? <Loader size={12} className="animate-spin" /> : <Check size={12} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(null);
+                                                                setEditField(null);
+                                                            }}
+                                                            className="p-1 bg-gray-100 text-gray-500 rounded-md hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-black text-purple-600 leading-none">{user.teamIncome || 0}</p>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(user.id);
+                                                                setEditField("teamIncome");
+                                                                setEditTeamIncome(user.teamIncome?.toString() || "0");
+                                                            }}
+                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-purple-500 hover:bg-purple-50"
+                                                            title="Edit Team Income"
+                                                        >
+                                                            <Pencil size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-rose-50/50 border border-rose-100 group-hover:bg-rose-50 transition-colors text-center relative">
+                                                <Key size={14} className="text-rose-500 mb-1" />
+                                                <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest leading-none mb-1">Withdraw Pwd</p>
+                                                {editingUserId === user.id && editField === "withdrawalPassword" ? (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <input
+                                                            type="text"
+                                                            value={editWithdrawalPassword}
+                                                            onChange={(e) => setEditWithdrawalPassword(e.target.value)}
+                                                            className="w-20 h-7 bg-white border border-rose-200 rounded-lg text-xs font-black text-rose-600 px-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                                                            autoFocus
+                                                        />
+                                                        <button
+                                                            onClick={() => handleUpdateWithdrawalPassword(user.id)}
+                                                            disabled={updating}
+                                                            className="p-1 bg-rose-500 text-white rounded-md hover:bg-rose-600 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {updating ? <Loader size={12} className="animate-spin" /> : <Check size={12} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(null);
+                                                                setEditField(null);
+                                                            }}
+                                                            className="p-1 bg-gray-100 text-gray-500 rounded-md hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-black text-rose-600 leading-none">{user.withdrawalPassword || "Not Set"}</p>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(user.id);
+                                                                setEditField("withdrawalPassword");
+                                                                setEditWithdrawalPassword(user.withdrawalPassword?.toString() || "");
+                                                            }}
+                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-rose-500 hover:bg-rose-50"
+                                                            title="Edit Withdrawal Password"
+                                                        >
+                                                            <Pencil size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-amber-50/50 border border-amber-100 group-hover:bg-amber-50 transition-colors">
                                                 <ArrowDownCircle size={14} className="text-amber-500 mb-1" />
@@ -216,7 +407,7 @@ function UsersManagement() {
                                             <div className="w-full sm:w-32 flex flex-col items-center justify-center p-3 rounded-2xl bg-emerald-50/50 border border-emerald-100 group-hover:bg-emerald-50 transition-colors relative">
                                                 <CreditCard size={14} className="text-emerald-500 mb-1" />
                                                 <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Balance</p>
-                                                {editingUserId === user.id ? (
+                                                {editingUserId === user.id && editField === "balance" ? (
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <input
                                                             type="number"
@@ -233,7 +424,10 @@ function UsersManagement() {
                                                             {updating ? <Loader size={12} className="animate-spin" /> : <Check size={12} />}
                                                         </button>
                                                         <button
-                                                            onClick={() => setEditingUserId(null)}
+                                                            onClick={() => {
+                                                                setEditingUserId(null);
+                                                                setEditField(null);
+                                                            }}
                                                             className="p-1 bg-gray-100 text-gray-500 rounded-md hover:bg-gray-200 transition-colors"
                                                         >
                                                             <X size={12} />
@@ -245,6 +439,7 @@ function UsersManagement() {
                                                         <button
                                                             onClick={() => {
                                                                 setEditingUserId(user.id);
+                                                                setEditField("balance");
                                                                 setEditBalance(user.balance?.toString() || "0");
                                                             }}
                                                             className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-emerald-500 hover:bg-emerald-50"

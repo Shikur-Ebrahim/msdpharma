@@ -31,7 +31,8 @@ import {
     XCircle,
     Copy,
     ArrowRight,
-    Gift
+    Gift,
+    Lock
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -205,6 +206,14 @@ export default function AdminSettings() {
             icon: ShieldAlert,
             color: "bg-rose-50 text-rose-600",
             action: () => setActiveTab("security")
+        },
+        {
+            id: "reset-password",
+            title: "Password Reset",
+            desc: "Force reset user login",
+            icon: Lock,
+            color: "bg-red-50 text-red-600",
+            path: "/admin/settings/reset-password"
         }
     ];
 

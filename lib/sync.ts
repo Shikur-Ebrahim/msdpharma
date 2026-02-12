@@ -118,7 +118,6 @@ export async function syncDailyIncome(currentUserId?: string) {
         // Update User Balance
         batch.update(userRef, {
             balance: increment(totalPayout),
-            Recharge: increment(totalPayout), // Note: Should this update Recharge or just Balance/TotalIncome? User request implies balance.
             totalIncome: increment(totalPayout),
             dailyIncome: totalActiveDailyIncome // Set to TOTAL active income sum, not just today's payout
         });
