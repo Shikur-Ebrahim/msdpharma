@@ -141,7 +141,7 @@ function PendingContent() {
                 </div>
             </header>
 
-            <main className="flex-1 px-6 flex flex-col items-center justify-center relative z-10 max-w-lg mx-auto w-full pb-40">
+            <main className="flex-1 px-6 flex flex-col items-center justify-center relative z-10 max-w-lg mx-auto w-full pb-56">
                 {/* Scanner UI */}
                 <div className="relative mb-20 group">
                     <div className="absolute inset-[-40px] border border-blue-500/5 rounded-full animate-[ping_4s_ease-in-out_infinite]"></div>

@@ -62,7 +62,7 @@ function BottomNavContent() {
         }
     }, [pathname, searchParams, mounted]);
 
-    const hideNav = pathname === "/users/chat" || pathname === "/users/tasks" || pathname.startsWith("/users/withdraw") || pathname === "/users/change-withdrawal-password" || (pathname.includes("-record") && pathname !== "/users/weekend-record") || pathname === "/users/funding-details" || (pathname.startsWith("/users/product/") && pathname !== "/users/product") || (pathname.startsWith("/users/weekend/") && pathname !== "/users/weekend");
+    const hideNav = pathname === "/users/chat" || pathname === "/users/tasks" || pathname.startsWith("/users/withdraw") || pathname === "/users/change-withdrawal-password" || (pathname.includes("-record") && pathname !== "/users/weekend-record") || pathname === "/users/funding-details" || (pathname.startsWith("/users/product/") && pathname !== "/users/product") || (pathname.startsWith("/users/weekend/") && pathname !== "/users/weekend") || pathname === "/users/transaction-pending";
 
     if (!mounted || hideNav) return null;
 
@@ -75,7 +75,7 @@ function BottomNavContent() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[100] px-6 pb-8 bg-gradient-to-t from-white via-white/80 to-transparent pt-12 pointer-events-none mx-auto max-w-lg">
+        <div className="fixed bottom-0 left-0 right-0 z-[100] px-6 pb-8 bg-gradient-to-t from-white via-white to-white/60 pt-16 pointer-events-none mx-auto max-w-lg">
             <div className="flex items-center justify-between gap-4 pointer-events-auto">
                 {navItems.map((item) => (
                     <button
