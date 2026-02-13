@@ -36,8 +36,9 @@ function UsersManagement() {
     const [editBalance, setEditBalance] = useState("");
     const [editCredits, setEditCredits] = useState("");
     const [editTeamIncome, setEditTeamIncome] = useState("");
+    const [editTotalIncome, setEditTotalIncome] = useState("");
     const [editWithdrawalPassword, setEditWithdrawalPassword] = useState("");
-    const [editField, setEditField] = useState<"balance" | "credits" | "teamIncome" | "withdrawalPassword" | null>(null);
+    const [editField, setEditField] = useState<"balance" | "credits" | "teamIncome" | "totalIncome" | "withdrawalPassword" | null>(null);
     const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
@@ -118,6 +119,23 @@ function UsersManagement() {
             setEditField(null);
         } catch (error) {
             console.error("Error updating team income:", error);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleUpdateTotalIncome = async (userId: string) => {
+        if (!editTotalIncome || isNaN(Number(editTotalIncome))) return;
+        setUpdating(true);
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                totalIncome: Number(editTotalIncome)
+            });
+            setEditingUserId(null);
+            setEditField(null);
+        } catch (error) {
+            console.error("Error updating total income:", error);
         } finally {
             setUpdating(false);
         }
@@ -347,6 +365,52 @@ function UsersManagement() {
                                                             }}
                                                             className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-purple-500 hover:bg-purple-50"
                                                             title="Edit Team Income"
+                                                        >
+                                                            <Pencil size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 sm:w-28 flex flex-col items-center justify-center p-3 rounded-2xl bg-orange-50/50 border border-orange-100 group-hover:bg-orange-50 transition-colors text-center relative">
+                                                <TrendingUp size={14} className="text-orange-500 mb-1" />
+                                                <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest leading-none mb-1">Total Inc.</p>
+                                                {editingUserId === user.id && editField === "totalIncome" ? (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <input
+                                                            type="number"
+                                                            value={editTotalIncome}
+                                                            onChange={(e) => setEditTotalIncome(e.target.value)}
+                                                            className="w-20 h-7 bg-white border border-orange-200 rounded-lg text-xs font-black text-orange-600 px-2 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                                                            autoFocus
+                                                        />
+                                                        <button
+                                                            onClick={() => handleUpdateTotalIncome(user.id)}
+                                                            disabled={updating}
+                                                            className="p-1 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {updating ? <Loader size={12} className="animate-spin" /> : <Check size={12} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(null);
+                                                                setEditField(null);
+                                                            }}
+                                                            className="p-1 bg-gray-100 text-gray-500 rounded-md hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-black text-orange-600 leading-none">{user.totalIncome || 0}</p>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUserId(user.id);
+                                                                setEditField("totalIncome");
+                                                                setEditTotalIncome(user.totalIncome?.toString() || "0");
+                                                            }}
+                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-lg text-orange-500 hover:bg-orange-50"
+                                                            title="Edit Total Income"
                                                         >
                                                             <Pencil size={12} />
                                                         </button>

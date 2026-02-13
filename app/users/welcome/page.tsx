@@ -545,7 +545,7 @@ function WelcomeContent() {
                                     <div className="flex items-baseline gap-1.5 bg-green-50 px-4 py-2 rounded-2xl border border-green-100 shadow-sm shadow-green-900/5">
                                         <span className="text-[10px] font-black text-green-700/60 uppercase tracking-widest">{t.balance}</span>
                                         <span className="text-sm font-black text-green-700">
-                                            {(userData?.balance ?? userData?.Recharge ?? 0).toLocaleString()} <span className="text-[10px] font-medium text-green-700/60 ml-0.5">ETB</span>
+                                            {(Math.floor(userData?.balance || 0) + Math.floor(userData?.Recharge || 0)).toLocaleString()} <span className="text-[10px] font-medium text-green-700/60 ml-0.5">ETB</span>
                                         </span>
                                     </div>
                                 </div>

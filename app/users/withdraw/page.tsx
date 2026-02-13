@@ -131,6 +131,16 @@ export default function WithdrawalPage() {
         return () => unsubscribeAuth();
     }, [router]);
 
+    const formatEthTime = (timeStr: string) => {
+        if (!timeStr) return "";
+        const [h, m] = timeStr.split(":").map(Number);
+        // Ethiopian time = (Server Time - 6) mod 12 (roughly, for 12hr display, but user wants HH:mm)
+        // User explicitly asked for 08:00 -> 2:00 and 17:00 -> 11:00
+        let ethH = h - 6;
+        if (ethH <= 0) ethH += 12; // Simple shift for this range
+        return `${String(ethH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
     const handleWithdrawClick = () => {
         const numAmount = Number(amount);
         const balance = userData?.balance || 0;
@@ -176,7 +186,7 @@ export default function WithdrawalPage() {
 
 
         if (currentTime < startTotal || currentTime > endTotal) {
-            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", withdrawalSettings.startTime) });
+            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", formatEthTime(withdrawalSettings.startTime)) });
             return;
         }
 
@@ -282,7 +292,7 @@ export default function WithdrawalPage() {
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-red-500 mb-1">{t.closed}</p>
                                         <p className="text-base font-bold text-blue-900">
-                                            {t.opensAtTomorrow.replace("{time}", withdrawalSettings.startTime)}
+                                            {t.opensAtTomorrow.replace("{time}", formatEthTime(withdrawalSettings.startTime))}
                                         </p>
                                     </div>
 
@@ -297,7 +307,7 @@ export default function WithdrawalPage() {
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-green-600 mb-1">{t.active}</p>
                                     <p className="text-base font-bold text-blue-900">
-                                        {t.availableUntil.replace("{time}", withdrawalSettings.endTime)}
+                                        {t.availableUntil.replace("{time}", formatEthTime(withdrawalSettings.endTime))}
                                     </p>
                                 </div>
 
@@ -455,11 +465,10 @@ export default function WithdrawalPage() {
 
                     <ul className="space-y-8">
                         {[
-                            `${t.hospitalHours}: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
+                            `${t.hospitalHours}: ${formatEthTime(withdrawalSettings.startTime)} - ${formatEthTime(withdrawalSettings.endTime)} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
                             `${t.dosageLimits}: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
                             `${t.oneRefundPer.replace("{days}", String(withdrawalSettings.frequency))}`,
-                            t.processingTimeDesc,
-                            `${t.identityRule}: ${t.bankMatchRule}`
+                            t.processingTimeDesc
                         ].map((rule, i) => {
                             const [label, ...val] = rule.split(": ");
                             return (

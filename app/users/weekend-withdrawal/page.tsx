@@ -205,6 +205,15 @@ export default function WeekendWithdrawalPage() {
         fetchAndLock();
     }, [user, userData]);
 
+    const formatEthTime = (timeStr: string) => {
+        if (!timeStr) return "";
+        const [h, m] = timeStr.split(":").map(Number);
+        // Ethiopian time = (Server Time - 6) mod 12
+        let ethH = h - 6;
+        if (ethH <= 0) ethH += 12;
+        return `${String(ethH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
     const handleWithdrawClick = () => {
         const numAmount = Number(amount);
         const balance = eligibleWithdrawalBalance + (userData?.fixedWeekendBalance || 0);
@@ -245,7 +254,7 @@ export default function WeekendWithdrawalPage() {
         }
 
         if (currentTime < startTotal || currentTime > endTotal) {
-            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", withdrawalSettings.startTime) });
+            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", formatEthTime(withdrawalSettings.startTime)) });
             return;
         }
 
@@ -346,7 +355,7 @@ export default function WeekendWithdrawalPage() {
                                     <div className="flex-1">
                                         <p className="text-[10px] font-bold text-red-500 mb-1">{t.closed}</p>
                                         <p className="text-base font-bold text-blue-900">
-                                            {t.opensAtTomorrow.replace("{time}", withdrawalSettings.startTime)}
+                                            {t.opensAtTomorrow.replace("{time}", formatEthTime(withdrawalSettings.startTime))}
                                         </p>
                                     </div>
                                 </div>
@@ -360,7 +369,7 @@ export default function WeekendWithdrawalPage() {
                                 <div className="flex-1">
                                     <p className="text-[10px] font-bold text-orange-600 mb-1">{t.success}</p>
                                     <p className="text-base font-bold text-blue-900">
-                                        {t.availableUntil.replace("{time}", withdrawalSettings.endTime)}
+                                        {t.availableUntil.replace("{time}", formatEthTime(withdrawalSettings.endTime))}
                                     </p>
                                 </div>
                                 <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
@@ -501,11 +510,10 @@ export default function WeekendWithdrawalPage() {
 
                     <ul className="space-y-8">
                         {[
-                            `${t.hospitalHours}: ${withdrawalSettings.startTime} - ${withdrawalSettings.endTime} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
+                            `${t.hospitalHours}: ${formatEthTime(withdrawalSettings.startTime)} - ${formatEthTime(withdrawalSettings.endTime)} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
                             `${t.dosageLimits}: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
                             `${t.oneRefundPer.replace("{days}", String(withdrawalSettings.frequency))}`,
-                            t.processingTimeDesc,
-                            `${t.identityRule}: ${t.bankMatchRule}`
+                            t.processingTimeDesc
                         ].map((rule, i) => {
                             const [label, ...val] = rule.split(": ");
                             return (

@@ -20,18 +20,17 @@ export async function POST(request: Request) {
             );
         }
 
-        // 1. Get user by phone number to find UID
+        // 1. Get user by email formatted identifier to find UID
         let userRecord;
         try {
-            // Ensure phone number has '+' prefix if stored that way. 
-            // The admin usually searches by phone, so we expect the full format or we adjust.
-            // Assuming standardized "+251..." format in Auth.
-            // If the input doesn't have '+', we might need to handle it, but for now let's assume valid input or handle generic "user not found".
-            userRecord = await admin.auth().getUserByPhoneNumber(phoneNumber);
+            // Users are stored like "2519... @msd.app"
+            const cleanedPhone = phoneNumber.replace(/\+/g, '').trim();
+            const userEmail = `${cleanedPhone}@msd.app`;
+            userRecord = await admin.auth().getUserByEmail(userEmail);
         } catch (error: any) {
             if (error.code === 'auth/user-not-found') {
                 return NextResponse.json(
-                    { error: 'No user found with this phone number.' },
+                    { error: `No user found with identifier ${phoneNumber}@msd.app` },
                     { status: 404 }
                 );
             }

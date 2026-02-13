@@ -8,7 +8,8 @@ import {
     writeBatch,
     Timestamp,
     serverTimestamp,
-    increment
+    increment,
+    runTransaction
 } from "firebase/firestore";
 
 /**
@@ -24,12 +25,21 @@ export async function syncWeekendDailyIncome(currentUserId?: string) {
         if (!currentUserId) return;
 
         const now = new Date();
-        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         console.log(`[Weekend Daily Income] Checking sync for user ${currentUserId} on ${todayStr}`);
 
-        // Get ONLY this user's active weekend orders
+        // 1. Concurrency Guard: Check if already synced today using a Transaction
+        const userRef = doc(db, "users", currentUserId);
+        const canSync = await runWeekendSyncGuard(userRef, todayStr);
+
+        if (!canSync) {
+            console.log(`[Weekend Daily Income] User ${currentUserId} already synced for ${todayStr}. Skipping.`);
+            return;
+        }
+
+        // 2. Get ONLY this user's active weekend orders
         const ordersRef = collection(db, "WeekendUserOrders");
         const q = query(
             ordersRef,
@@ -103,5 +113,32 @@ export async function syncWeekendDailyIncome(currentUserId?: string) {
 
     } catch (error) {
         console.error("[Weekend Daily Income] Error:", error);
+    }
+}
+
+/**
+ * Ensures sync only runs once per day per user using a transaction
+ */
+async function runWeekendSyncGuard(userRef: any, todayStr: string): Promise<boolean> {
+    try {
+        const { runTransaction } = await import("firebase/firestore");
+        return await runTransaction(db, async (transaction) => {
+            const userSnap = await transaction.get(userRef);
+            if (!userSnap.exists()) return false;
+
+            const userData = userSnap.data() as any;
+            if (userData && userData.lastWeekendIncomeSyncDay === todayStr) {
+                return false; // Already synced today
+            }
+
+            // Mark as synced for today
+            transaction.update(userRef, {
+                lastWeekendIncomeSyncDay: todayStr
+            });
+            return true;
+        });
+    } catch (e) {
+        console.error("[Weekend Sync Guard] Transaction failed:", e);
+        return false;
     }
 }

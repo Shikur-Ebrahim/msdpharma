@@ -7,7 +7,9 @@ import {
     query,
     orderBy,
     onSnapshot,
-    getDocs
+    getDocs,
+    updateDoc,
+    doc
 } from "firebase/firestore";
 import {
     Package,
@@ -22,7 +24,10 @@ import {
     Search,
     ChevronDown,
     ChevronUp,
-    Filter
+    Filter,
+    Edit3,
+    X as CloseIcon,
+    Save
 } from "lucide-react";
 import AdminSidebar from "@/components/AdminSidebar";
 
@@ -33,6 +38,45 @@ export default function AdminSalesTrackingPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    // Modal States
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [editPrice, setEditPrice] = useState("");
+    const [editDailyIncome, setEditDailyIncome] = useState("");
+    const [editContract, setEditContract] = useState("");
+    const [editRemainingDays, setEditRemainingDays] = useState("");
+    const [updating, setUpdating] = useState(false);
+
+    const handleEditClick = (order: any) => {
+        setSelectedOrder(order);
+        setEditPrice(order.price?.toString() || "");
+        setEditDailyIncome(order.dailyIncome?.toString() || "");
+        setEditContract(order.contractPeriod?.toString() || "");
+        setEditRemainingDays(order.remainingDays?.toString() || "");
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateOrder = async () => {
+        if (!selectedOrder) return;
+        setUpdating(true);
+        try {
+            const orderRef = doc(db, "UserOrders", selectedOrder.id);
+            await updateDoc(orderRef, {
+                price: Number(editPrice),
+                dailyIncome: Number(editDailyIncome),
+                contractPeriod: Number(editContract),
+                remainingDays: Number(editRemainingDays)
+            });
+            setIsEditModalOpen(false);
+            // Result will be updated via real-time listener (onSnapshot)
+        } catch (error) {
+            console.error("Error updating order:", error);
+            alert("Failed to update order. Check console.");
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     useEffect(() => {
         // 1. Fetch Users phone numbers map
@@ -186,6 +230,14 @@ export default function AdminSalesTrackingPage() {
                                             </div>
                                         </div>
 
+                                        <button
+                                            onClick={() => handleEditClick(order)}
+                                            className="absolute bottom-6 right-8 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-white hover:shadow-xl hover:shadow-indigo-600/10 transition-all z-20"
+                                            title="Edit Order"
+                                        >
+                                            <Edit3 size={18} />
+                                        </button>
+
                                         <div className="flex flex-col lg:flex-row gap-8 lg:items-center">
                                             {/* Product Identity */}
                                             <div className="flex-1 space-y-4">
@@ -267,6 +319,100 @@ export default function AdminSalesTrackingPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Edit Modal */}
+                {isEditModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !updating && setIsEditModalOpen(false)}></div>
+
+                        <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            {/* Modal Header */}
+                            <div className="bg-indigo-600 px-8 py-6 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
+                                        <Save size={20} />
+                                    </div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Edit Order</h3>
+                                </div>
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="text-white/60 hover:text-white transition-colors"
+                                >
+                                    <CloseIcon size={24} />
+                                </button>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Price (ETB)</label>
+                                        <input
+                                            type="number"
+                                            value={editPrice}
+                                            onChange={(e) => setEditPrice(e.target.value)}
+                                            className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Daily Income</label>
+                                        <input
+                                            type="number"
+                                            value={editDailyIncome}
+                                            onChange={(e) => setEditDailyIncome(e.target.value)}
+                                            className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contract (Days)</label>
+                                        <input
+                                            type="number"
+                                            value={editContract}
+                                            onChange={(e) => setEditContract(e.target.value)}
+                                            className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Remaining Days</label>
+                                        <input
+                                            type="number"
+                                            value={editRemainingDays}
+                                            onChange={(e) => setEditRemainingDays(e.target.value)}
+                                            className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3 pt-2">
+                                    <button
+                                        onClick={handleUpdateOrder}
+                                        disabled={updating}
+                                        className="w-full h-16 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        {updating ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                <Save size={18} />
+                                                Save Changes
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setIsEditModalOpen(false)}
+                                        disabled={updating}
+                                        className="w-full h-14 bg-transparent text-slate-400 font-black text-xs uppercase tracking-widest hover:text-slate-900 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

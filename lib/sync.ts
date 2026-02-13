@@ -10,7 +10,8 @@ import {
     writeBatch,
     Timestamp,
     serverTimestamp,
-    increment
+    increment,
+    runTransaction
 } from "firebase/firestore";
 
 /**
@@ -38,12 +39,12 @@ export async function syncDailyIncome(currentUserId?: string) {
             return;
         }
 
-        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         console.log(`[Daily Income] Checking sync for user ${currentUserId} on ${todayStr}`);
 
-        // Get ONLY this user's active orders
+        // 1. Get ONLY this user's active orders
         const ordersRef = collection(db, "UserOrders");
         const q = query(
             ordersRef,
@@ -54,6 +55,14 @@ export async function syncDailyIncome(currentUserId?: string) {
 
         if (ordersSnap.empty) {
             console.log("[Daily Income] No active orders found for user.");
+            return;
+        }
+
+        const userRef = doc(db, "users", currentUserId);
+        const canSync = await runSyncGuard(userRef, todayStr);
+
+        if (!canSync) {
+            console.log(`[Daily Income] User ${currentUserId} already synced for ${todayStr}. Skipping.`);
             return;
         }
 
@@ -98,44 +107,62 @@ export async function syncDailyIncome(currentUserId?: string) {
             }
         });
 
-        // Even if no payout is due (updates.length === 0), we should still update the dailyIncome rate
-        // But to avoid excessive writes, we can do it only if there's a payout OR if we want to ensure consistency.
-        // For now, let's proceed if there are updates.
+        if (updates.length > 0 || totalPayout > 0) {
+            console.log(`[Daily Income] Syncing ${updates.length} orders. Payout: ${totalPayout}. Total Rate: ${totalActiveDailyIncome}`);
 
-        if (updates.length === 0) {
-            console.log("[Daily Income] User already synced today.");
-            // Optional: If you want to force update dailyIncome rate even if synced, do it here.
-            // But usually rate changes only on purchase/expiry.
-            return;
-        }
+            // Update User and Orders in a Batch
+            const batch = writeBatch(db);
 
-        console.log(`[Daily Income] Syncing ${updates.length} orders. Payout: ${totalPayout}. Total Rate: ${totalActiveDailyIncome}`);
-
-        // Update User and Orders in a Batch
-        const batch = writeBatch(db);
-        const userRef = doc(db, "users", currentUserId);
-
-        // Update User Balance
-        batch.update(userRef, {
-            balance: increment(totalPayout),
-            totalIncome: increment(totalPayout),
-            dailyIncome: totalActiveDailyIncome // Set to TOTAL active income sum, not just today's payout
-        });
-
-        // Update Orders
-        for (const update of updates) {
-            const orderRef = doc(db, "UserOrders", update.id);
-            batch.update(orderRef, {
-                remainingDays: update.remainingDays,
-                status: update.status,
-                lastSync: serverTimestamp()
+            // Update User Balance
+            batch.update(userRef, {
+                balance: increment(totalPayout),
+                totalIncome: increment(totalPayout),
+                dailyIncome: totalActiveDailyIncome
             });
-        }
 
-        await batch.commit();
-        console.log("[Daily Income] Sync completed successfully.");
+            // Update Orders
+            for (const update of updates) {
+                const orderRef = doc(db, "UserOrders", update.id);
+                batch.update(orderRef, {
+                    remainingDays: update.remainingDays,
+                    status: update.status,
+                    lastSync: serverTimestamp()
+                });
+            }
+
+            await batch.commit();
+            console.log("[Daily Income] Sync completed successfully.");
+        } else {
+            console.log("[Daily Income] No payouts to process today.");
+        }
 
     } catch (error) {
         console.error("[Daily Income] Error:", error);
+    }
+}
+
+/**
+ * Ensures sync only runs once per day per user using a transaction
+ */
+async function runSyncGuard(userRef: any, todayStr: string): Promise<boolean> {
+    try {
+        return await runTransaction(db, async (transaction) => {
+            const userSnap = await transaction.get(userRef);
+            if (!userSnap.exists()) return false;
+
+            const userData = userSnap.data() as any;
+            if (userData && userData.lastIncomeSyncDay === todayStr) {
+                return false; // Already synced today
+            }
+
+            // Mark as synced for today immediately in the transaction
+            transaction.update(userRef, {
+                lastIncomeSyncDay: todayStr
+            });
+            return true;
+        });
+    } catch (e) {
+        console.error("[Sync Guard] Transaction failed:", e);
+        return false;
     }
 }
