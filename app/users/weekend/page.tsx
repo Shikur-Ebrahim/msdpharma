@@ -131,25 +131,33 @@ export default function WeekendUserPage() {
 
     const getProductTimeStatus = (product: any) => {
         const now = new Date();
-        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const ethiopianOffset = 3 * 60 * 60 * 1000;
-        const ethiopianTime = new Date(utcTimestamp + ethiopianOffset);
 
-        const year = ethiopianTime.getUTCFullYear();
-        const month = ethiopianTime.getUTCMonth();
-        const day = ethiopianTime.getUTCDate();
+        // Use Intl to get Ethiopian date parts reliably
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Africa/Addis_Ababa',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+
+        const parts = formatter.formatToParts(now);
+        const getPart = (type: string) => parts.find(p => p.type === type)?.value;
+        const year = getPart('year');
+        const month = getPart('month');
+        const day = getPart('day');
 
         const [startH, startM] = (product.startTime || "00:00").split(":").map(Number);
         const [endH, endM] = (product.endTime || "23:59").split(":").map(Number);
         const fmt = (n: number) => String(n).padStart(2, '0');
-        const dateStr = `${year}-${fmt(month + 1)}-${fmt(day)}`;
+        const dateStr = `${year}-${month}-${day}`;
 
+        // Construct ISO strings with explicitly +03:00 for Ethiopia
         const startIso = `${dateStr}T${fmt(startH)}:${fmt(startM)}:00+03:00`;
         const endIso = `${dateStr}T${fmt(endH)}:${fmt(endM)}:00+03:00`;
 
         const startDate = new Date(startIso);
         const endDate = new Date(endIso);
-        const nowTimestamp = now.getTime(); // Absolute comparisons
+        const nowTimestamp = now.getTime();
 
         if (nowTimestamp < startDate.getTime()) {
             return { status: "UPCOMING", targetDate: startDate };
@@ -180,12 +188,11 @@ export default function WeekendUserPage() {
 
     const filteredProducts = products
         .filter(product => {
-            // If activeDays is set, strict check
-            const now = new Date();
-            const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const ethiopianTime = new Date(utcTimestamp + (3 * 60 * 60 * 1000));
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const currentDay = days[ethiopianTime.getUTCDay()];
+            // Get current day in Ethiopia (Africa/Addis_Ababa)
+            const currentDay = new Intl.DateTimeFormat('en-US', {
+                weekday: 'long',
+                timeZone: 'Africa/Addis_Ababa'
+            }).format(new Date());
 
             if (product.activeDays && product.activeDays.length > 0) {
                 return product.activeDays.includes(currentDay);
@@ -197,7 +204,12 @@ export default function WeekendUserPage() {
             const statusB = getProductTimeStatus(b).status;
 
             const score = { "ACTIVE": 1, "UPCOMING": 2, "ENDED": 3 };
-            return (score[statusA as keyof typeof score] || 3) - (score[statusB as keyof typeof score] || 3);
+            const statusDiff = (score[statusA as keyof typeof score] || 3) - (score[statusB as keyof typeof score] || 3);
+
+            if (statusDiff !== 0) return statusDiff;
+
+            // Secondary sort: Price ascending (cheapest first)
+            return (a.price || 0) - (b.price || 0);
         });
 
     if (loading) {

@@ -110,9 +110,9 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
 
     const navigation = [
         { id: "recharge", label: "Recharge Wallet", icon: ShieldCheck, path: "/admin/recharge-verification" },
+        { id: "withdrawal-wallet", label: "Withdrawal Wallet", icon: Banknote, path: "/admin/withdrawal-wallet" },
         { id: "recharge-tracking", label: "Recharge Users", icon: TrendingUp, path: "/admin/recharge-tracking" },
         { id: "sales-tracking", label: "Sales Tracking", icon: BarChart3, path: "/admin/sales-tracking" },
-        { id: "withdrawal-wallet", label: "Withdrawal Wallet", icon: Banknote, path: "/admin/withdrawal-wallet" },
         { id: "weekend-withdrawal", label: "Weekend Withdrawal", icon: Banknote, path: "/admin/weekend-withdrawal" },
         { id: "financials", label: "Financial Stats", icon: BarChart3, path: "/admin/financials" },
         { id: "vip-upgrade", label: "VIP Upgrade", icon: ShieldCheck, path: "/admin/vip-upgrade" },

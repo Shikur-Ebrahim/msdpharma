@@ -132,12 +132,15 @@ export async function syncDailyIncome(currentUserId?: string) {
 
             await batch.commit();
             console.log("[Daily Income] Sync completed successfully.");
+            return totalPayout;
         } else {
             console.log("[Daily Income] No payouts to process today.");
+            return 0;
         }
 
     } catch (error) {
         console.error("[Daily Income] Error:", error);
+        return 0;
     }
 }
 

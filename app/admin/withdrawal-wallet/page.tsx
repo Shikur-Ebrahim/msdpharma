@@ -259,10 +259,20 @@ export default function WithdrawalWalletPage() {
             w.bankDetails?.accountNumber?.includes(searchTerm)
         );
 
-        // Grouping logic
-        const groupsMap = new Map<string, WithdrawalGroup>();
+        // 1. Separate Pending and Others
+        const pendingItems = filtered.filter(w => w.status === 'pending');
+        const otherItems = filtered.filter(w => w.status !== 'pending');
 
-        filtered.forEach(w => {
+        // 2. Sort Pending: Oldest First (FIFO)
+        const sortedPending = [...pendingItems].sort((a, b) => {
+            const timeA = a.createdAt?.seconds ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000;
+            const timeB = b.createdAt?.seconds ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000;
+            return timeA - timeB;
+        });
+
+        // 3. Group Others by Date
+        const groupsMap = new Map<string, WithdrawalGroup>();
+        otherItems.forEach(w => {
             const date = w.createdAt?.toDate ? w.createdAt.toDate() : new Date(w.createdAt);
             const dateKey = date.toDateString();
 
@@ -277,13 +287,13 @@ export default function WithdrawalWalletPage() {
             group.items.push(w);
         });
 
-        const sortedGroups = Array.from(groupsMap.values())
-            .sort((a: WithdrawalGroup, b: WithdrawalGroup) => b.timestamp - a.timestamp) // Newest Day First
+        const sortedDateGroups = Array.from(groupsMap.values())
+            .sort((a, b) => b.timestamp - a.timestamp)
             .map(group => {
-                const sortedItems = group.items.sort((a: Withdrawal, b: Withdrawal) => {
+                const sortedItems = group.items.sort((a, b) => {
                     const timeA = a.createdAt?.seconds ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000;
                     const timeB = b.createdAt?.seconds ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000;
-                    return timeA - timeB; // Oldest Item First in group
+                    return timeB - timeA; // Newest First for history
                 });
 
                 const date = new Date(group.timestamp);
@@ -300,8 +310,19 @@ export default function WithdrawalWalletPage() {
                 return { label, items: sortedItems };
             });
 
+        // 4. Combine
+        const finalGroups = [];
+        if (sortedPending.length > 0) {
+            finalGroups.push({
+                label: "Action Required • Oldest First",
+                items: sortedPending,
+                isPendingGroup: true
+            });
+        }
+        finalGroups.push(...sortedDateGroups);
+
         return {
-            groupedWithdrawals: sortedGroups,
+            groupedWithdrawals: finalGroups,
             stats: {
                 totalVerified: withdrawals
                     .filter(w => w.status === 'verified' || w.status === 'approved')

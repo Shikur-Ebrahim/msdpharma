@@ -35,12 +35,19 @@ function BottomNavContent() {
     useEffect(() => {
         setMounted(true);
         // Clean up any potential auth listeners
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 setUserId(user.uid);
-                // Trigger sync when we have a user
-                syncDailyIncome(user.uid);
-                syncWeekendDailyIncome(user.uid);
+                // Trigger sync and capture results
+                const regularIncome = await syncDailyIncome(user.uid);
+                const weekendIncome = await syncWeekendDailyIncome(user.uid);
+
+                const totalSynced = regularIncome || 0;
+                if (totalSynced > 0) {
+                    localStorage.setItem("pending_daily_income_celebration", totalSynced.toString());
+                    // Dispatch custom event to notify welcome page
+                    window.dispatchEvent(new Event("dailyIncomeSynced"));
+                }
             }
         });
         return () => unsubscribe();

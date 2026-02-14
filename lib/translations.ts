@@ -403,7 +403,11 @@ export const translations = {
         uploadingScreenshot: "Uploading Screenshot...",
         uploadPaymentScreenshot: "Upload Payment Screenshot",
         fileSizeLimit: "PNG, JPG or HEIC up to 10MB",
-        checkItOut: "OK, Check it out!"
+        checkItOut: "OK, Check it out!",
+        insufficientFundsTitle: "Insufficient Balance",
+        insufficientFundsMsg: "Your balance is not enough to purchase this medical product. Please recharge your wallet to continue.",
+        rechargeNow: "Recharge Now",
+        dailyIncomeReached: "Daily Income Reached"
     },
     AM: {
         healthcare: "የጤና ጥበቃ",
@@ -807,6 +811,10 @@ export const translations = {
         uploadingScreenshot: "ስክሪንሾት በመጫን ላይ...",
         uploadPaymentScreenshot: "የክፍያ ስክሪንሾት ይጫኑ",
         fileSizeLimit: "PNG፣ JPG ወይም HEIC እስከ 10MB",
-        checkItOut: "እሺ፣ ይመልከቱት!"
+        checkItOut: "እሺ፣ ይመልከቱት!",
+        insufficientFundsTitle: "በቂ ያልሆነ ቀሪ ሂሳብ",
+        insufficientFundsMsg: "ይህንን የሕክምና ምርት ለመግዛት ቀሪ ሂሳብዎ በቂ አይደለም። እባክዎ ለመቀጠል ቦርሳዎን ይሙሉ (ሪቻርጅ ያድርጉ)።",
+        rechargeNow: "አሁን ሙላ (ሪቻርጅ)",
+        dailyIncomeReached: "የቀን ገቢ ደርሷል"
     }
 };

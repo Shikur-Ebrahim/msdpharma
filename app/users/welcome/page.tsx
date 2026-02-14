@@ -27,6 +27,8 @@ import WeekendNotificationModal from "@/components/WeekendNotificationModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { translations, Language } from "@/lib/translations";
 import { motion, AnimatePresence } from "framer-motion";
+import DailyIncomeCelebration from "@/components/DailyIncomeCelebration";
+import NewUserAgreementModal from "@/components/NewUserAgreementModal";
 
 import { Suspense } from "react";
 
@@ -55,9 +57,17 @@ function WelcomeContent() {
     const [showVipCeleb, setShowVipCeleb] = useState(false);
     const [vipCelebData, setVipCelebData] = useState<any>(null);
 
-    // Weekend Notification State
     const [showWeekendNotif, setShowWeekendNotif] = useState(false);
     const [weekendNotifData, setWeekendNotifData] = useState<any>(null);
+
+    // Daily Income Celebration State
+    const [showIncomeCelebration, setShowIncomeCelebration] = useState(false);
+    const [celebrationAmount, setCelebrationAmount] = useState(0);
+
+    // Partner Agreement State
+    const [showAgreementModal, setShowAgreementModal] = useState(false);
+    const [agreementData, setAgreementData] = useState<any>(null);
+
     const [lang, setLang] = useState<Language>("EN");
     const t = translations[lang];
 
@@ -207,6 +217,36 @@ function WelcomeContent() {
                             setShowVipCeleb(true);
                         }
                     }
+
+                    // --- Partner Agreement Fetching & Logic ---
+                    if (!data.hasSeenAgreement) {
+                        try {
+                            const [weekendSnap, withdrawalSnap, referralSnap, telegramSnap] = await Promise.all([
+                                getDoc(doc(db, "GlobalSettings", "weekend")),
+                                getDoc(doc(db, "GlobalSettings", "withdrawal")),
+                                getDoc(doc(db, "settings", "referral")),
+                                getDoc(doc(db, "telegram_links", "active"))
+                            ]);
+
+                            const combinedData = {
+                                weekendBonus: weekendSnap.data()?.defaultBalance || 0,
+                                minWithdrawal: withdrawalSnap.data()?.minAmount || 0,
+                                referralRewards: {
+                                    levelA: referralSnap.data()?.levelA || 0,
+                                    levelB: referralSnap.data()?.levelB || 0,
+                                    levelC: referralSnap.data()?.levelC || 0,
+                                    levelD: referralSnap.data()?.levelD || 0,
+                                },
+                                telegramChannel: telegramSnap.data()?.channelLink || "https://t.me/msdpharma",
+                                telegramSupport: telegramSnap.data()?.teamLink || "MSD_COM_agent"
+                            };
+
+                            setAgreementData(combinedData);
+                            setShowAgreementModal(true);
+                        } catch (err) {
+                            console.error("Error fetching agreement data:", err);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching user data:", error);
@@ -257,10 +297,12 @@ function WelcomeContent() {
             const data = docSnap.data();
             if (!data.isEnabled) return;
 
-            // 2. Check Day
             const now = new Date();
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const currentDay = days[now.getDay()];
+            // 2. Check Day in Ethiopia
+            const currentDay = new Intl.DateTimeFormat('en-US', {
+                weekday: 'long',
+                timeZone: 'Africa/Addis_Ababa'
+            }).format(now);
 
             // Handle both legacy string day and new array targetDays
             const activeDays = (data.targetDays || (data.targetDay ? [data.targetDay] : []));
@@ -283,10 +325,17 @@ function WelcomeContent() {
                     }
                 });
 
-                // 4. Time Check
+                // 4. Time Check (Ethiopian Time)
                 const [targetHour, targetMinute] = earliestTime.split(":").map(Number);
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
+                const ethiopianNowParts = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Africa/Addis_Ababa',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: false
+                }).formatToParts(new Date());
+                const currentHour = parseInt(ethiopianNowParts.find(p => p.type === 'hour')?.value || '0');
+                const currentMinute = parseInt(ethiopianNowParts.find(p => p.type === 'minute')?.value || '0');
+
                 const timeInMinutes = currentHour * 60 + currentMinute;
                 const targetInMinutes = targetHour * 60 + targetMinute;
 
@@ -301,6 +350,7 @@ function WelcomeContent() {
                 // Let's stick to a robust simple logic:
                 // Check Max Views.
 
+                const now = new Date();
                 const dateKey = now.toDateString();
                 const countKey = `weekend_notif_count_${dateKey}`;
                 const currentCount = parseInt(localStorage.getItem(countKey) || "0");
@@ -331,6 +381,25 @@ function WelcomeContent() {
         };
 
         fetchSettingsAndCheck();
+    }, []);
+
+    // Daily Income Celebration Check
+    useEffect(() => {
+        const checkCelebration = () => {
+            const pendingAmount = localStorage.getItem("pending_daily_income_celebration");
+            if (pendingAmount) {
+                setCelebrationAmount(Number(pendingAmount));
+                setShowIncomeCelebration(true);
+                localStorage.removeItem("pending_daily_income_celebration");
+            }
+        };
+
+        // Check on mount
+        checkCelebration();
+
+        // Listen for custom event from BottomNav
+        window.addEventListener("dailyIncomeSynced", checkCelebration);
+        return () => window.removeEventListener("dailyIncomeSynced", checkCelebration);
     }, []);
 
     const handleWeekendConfirm = () => {
@@ -744,6 +813,35 @@ function WelcomeContent() {
                     title={weekendNotifData.title}
                     message={weekendNotifData.message}
                     onConfirm={handleWeekendConfirm}
+                />
+            )}
+
+            {/* Daily Income Celebration Overlay */}
+            {showIncomeCelebration && (
+                <DailyIncomeCelebration
+                    amount={celebrationAmount}
+                    lang={lang}
+                    onClose={() => setShowIncomeCelebration(false)}
+                />
+            )}
+
+            {/* Partner Agreement Modal */}
+            {showAgreementModal && agreementData && (
+                <NewUserAgreementModal
+                    data={agreementData}
+                    lang={lang}
+                    onConfirm={async () => {
+                        setShowAgreementModal(false);
+                        if (user) {
+                            try {
+                                await updateDoc(doc(db, "users", user.uid), {
+                                    hasSeenAgreement: true
+                                });
+                            } catch (err) {
+                                console.error("Error updating agreement status:", err);
+                            }
+                        }
+                    }}
                 />
             )}
         </div >

@@ -110,9 +110,11 @@ export async function syncWeekendDailyIncome(currentUserId?: string) {
 
         await batch.commit();
         console.log("[Weekend Daily Income] Sync completed successfully.");
+        return totalPayout;
 
     } catch (error) {
         console.error("[Weekend Daily Income] Error:", error);
+        return 0;
     }
 }
 

@@ -24,7 +24,8 @@ import {
     Award,
     X,
     ArrowRight,
-    PartyPopper
+    PartyPopper,
+    Wallet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { translations, Language } from "@/lib/translations";
@@ -73,6 +74,7 @@ export default function WeekendProductClient() {
     const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
     const [lang, setLang] = useState<Language>("EN");
     const t = translations[lang];
 
@@ -123,34 +125,36 @@ export default function WeekendProductClient() {
         if (!product) return;
 
         const checkTime = () => {
-            // 1. Get Current Time in UTC
             const now = new Date();
-            const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
 
-            // 2. Get Current Ethiopian Time (UTC+3) for Date extraction
-            const ethiopianOffset = 3 * 60 * 60 * 1000;
-            const ethiopianTime = new Date(utcTimestamp + ethiopianOffset);
+            // Use Intl to get Ethiopian date parts reliably
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Africa/Addis_Ababa',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
 
-            // 3. Construct Start/End Dates relative to Today in Ethiopia/EAT
-            const year = ethiopianTime.getUTCFullYear();
-            const month = ethiopianTime.getUTCMonth();
-            const day = ethiopianTime.getUTCDate();
+            const parts = formatter.formatToParts(now);
+            const getPart = (type: string) => parts.find(p => p.type === type)?.value;
+            const year = getPart('year');
+            const month = getPart('month');
+            const day = getPart('day');
 
             const [startH, startM] = (product.startTime || "00:00").split(":").map(Number);
             const [endH, endM] = (product.endTime || "23:59").split(":").map(Number);
 
             const fmt = (n: number) => String(n).padStart(2, '0');
-            const dateStr = `${year}-${fmt(month + 1)}-${fmt(day)}`;
+            const dateStr = `${year}-${month}-${day}`;
 
-            // Explicitly ISO with +03:00 offset
+            // Explicitly ISO with +03:00 offset for Ethiopia
             const startIso = `${dateStr}T${fmt(startH)}:${fmt(startM)}:00+03:00`;
             const endIso = `${dateStr}T${fmt(endH)}:${fmt(endM)}:00+03:00`;
 
             const startDate = new Date(startIso);
             const endDate = new Date(endIso);
 
-            // Now compare absolute timestamps
-            const nowTimestamp = now.getTime(); // Absolute
+            const nowTimestamp = now.getTime();
 
             if (nowTimestamp < startDate.getTime()) {
                 setTimeStatus("UPCOMING");
@@ -257,9 +261,7 @@ export default function WeekendProductClient() {
                 console.error("System Purchase error:", error);
             }
             if (error.message === "INSUFFICIENT_FUNDS") {
-                setStatusMsg({ type: "error", text: "INSUFFICIENT_FUNDS_SPECIAL" });
-                const rechargeReviewRef = collection(db, "RechargeReview");
-                setTimeout(() => router.push("/users/recharge"), 2000);
+                setShowInsufficientModal(true);
                 return;
             }
 
@@ -547,6 +549,51 @@ export default function WeekendProductClient() {
                                         className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-900/20"
                                     >
                                         OK
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Insufficient Funds Modal */}
+            <AnimatePresence>
+                {showInsufficientModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-red-600 to-red-700"></div>
+
+                            <div className="flex flex-col items-center text-center space-y-6">
+                                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-2">
+                                    <AlertCircle size={40} className="text-red-500" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t.insufficientFundsTitle}</h3>
+                                    <p className="text-sm font-medium text-slate-500 leading-relaxed px-2">
+                                        {t.insufficientFundsMsg}
+                                    </p>
+                                </div>
+
+                                <div className="w-full pt-4 space-y-3">
+                                    <button
+                                        onClick={() => router.push("/users/recharge")}
+                                        className="w-full h-14 bg-red-600 text-white rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-2"
+                                    >
+                                        <Wallet size={18} />
+                                        {t.rechargeNow}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowInsufficientModal(false)}
+                                        className="w-full h-14 bg-slate-100 text-slate-600 rounded-2xl font-black tracking-widest uppercase text-xs hover:bg-slate-200 active:scale-95 transition-all"
+                                    >
+                                        {t.cancel}
                                     </button>
                                 </div>
                             </div>
