@@ -29,7 +29,8 @@ import {
     PartyPopper,
     BarChart3,
     TrendingUp,
-    Gift
+    Gift,
+    ShoppingCart
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -113,6 +114,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
         { id: "withdrawal-wallet", label: "Withdrawal Wallet", icon: Banknote, path: "/admin/withdrawal-wallet" },
         { id: "recharge-tracking", label: "Recharge Users", icon: TrendingUp, path: "/admin/recharge-tracking" },
         { id: "sales-tracking", label: "Sales Tracking", icon: BarChart3, path: "/admin/sales-tracking" },
+        { id: "weekend-sales-tracking", label: "W-Sales Tracking", icon: TrendingUp, path: "/admin/weekend-sales-tracking" },
         { id: "weekend-withdrawal", label: "Weekend Withdrawal", icon: Banknote, path: "/admin/weekend-withdrawal" },
         { id: "financials", label: "Financial Stats", icon: BarChart3, path: "/admin/financials" },
         { id: "vip-upgrade", label: "VIP Upgrade", icon: ShieldCheck, path: "/admin/vip-upgrade" },
@@ -124,6 +126,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
         { id: "unlink-account", label: "Unlink Account", icon: UserX, path: "/admin/unlink-account" },
         { id: "notifications", label: "Withdrawal Alerts", icon: Bell, path: "/admin/notifications" },
         { id: "products", label: "Products", icon: Package, path: "/admin/product" },
+        { id: "buy-product", label: "Buy Product", icon: ShoppingCart, path: "/admin/buy-product" },
         { id: "weekend-product", label: "Weekend", icon: PartyPopper, path: "/admin/weekend-product" },
         { id: "weekend-notification", label: "Weekend Alert", icon: Bell, path: "/admin/weekend-notification" },
         { id: "referral", label: "Referral Rule", icon: Percent, path: "/admin/referral-settings" },
