@@ -132,7 +132,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
         { id: "referral", label: "Referral Rule", icon: Percent, path: "/admin/referral-settings" },
         { id: "vip-rules", label: "VIP Rules", icon: Crown, path: "/admin/vip-rules" },
         { id: "vip-notifications", label: "VIP Celebration", icon: PartyPopper, path: "/admin/vip-notifications" },
-        { id: "telegram", label: "Telegram Staff", icon: Send, path: "/admin/telegram" },
+        { id: "telegram", label: "Support Staff", icon: Send, path: "/admin/telegram" },
         { id: "platform-notifications", label: "Platform Alerts", icon: Bell, path: "/admin/platform-notifications" },
         { id: "team-search", label: "Team Search", icon: Users, path: "/admin/team-search" },
         { id: "users", label: "Users", icon: Users, path: "/admin/users" },

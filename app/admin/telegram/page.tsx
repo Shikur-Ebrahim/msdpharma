@@ -28,7 +28,9 @@ export default function TelegramManagement() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [settings, setSettings] = useState({
         channelLink: "",
-        teamLink: ""
+        teamLink: "",
+        imoNumber: "",
+        whatsappNumber: ""
     });
 
     useEffect(() => {
@@ -51,7 +53,9 @@ export default function TelegramManagement() {
             if (docSnap.exists()) {
                 setSettings({
                     channelLink: docSnap.data().channelLink || "",
-                    teamLink: docSnap.data().teamLink || ""
+                    teamLink: docSnap.data().teamLink || "",
+                    imoNumber: docSnap.data().imoNumber || "",
+                    whatsappNumber: docSnap.data().whatsappNumber || ""
                 });
             }
         } catch (error) {
@@ -72,7 +76,7 @@ export default function TelegramManagement() {
                 updatedAt: new Date()
             }, { merge: true });
 
-            setStatus({ type: "success", message: "Telegram links updated successfully!" });
+            setStatus({ type: "success", message: "Contact links updated successfully!" });
         } catch (error) {
             console.error("Error saving settings:", error);
             setStatus({ type: "error", message: "Failed to update links. Please try again." });
@@ -105,8 +109,8 @@ export default function TelegramManagement() {
                             <Menu size={20} />
                         </button>
                         <div>
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Manager / <span className="text-purple-600">Telegram</span></h2>
-                            <h1 className="text-xl font-black text-gray-900 tracking-tight">Staff Links</h1>
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Manager / <span className="text-purple-600">Support</span></h2>
+                            <h1 className="text-xl font-black text-gray-900 tracking-tight">Contact Links</h1>
                         </div>
                     </div>
                     <div className="w-10 h-10 p-1 rounded-full border-2 border-purple-100 overflow-hidden">
@@ -120,7 +124,7 @@ export default function TelegramManagement() {
                         <div className="relative z-10">
                             <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Dynamic Support Channels ✨</h2>
                             <p className="text-gray-500 text-sm leading-relaxed max-w-xl font-medium">
-                                Update the Telegram contact links for users. These changes take effect immediately on the user's Customer Service page.
+                                Update the contact links for users. These changes take effect immediately on the user's Customer Service page.
                             </p>
                         </div>
                         <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
@@ -188,6 +192,60 @@ export default function TelegramManagement() {
                                         onChange={(e) => setSettings(prev => ({ ...prev, teamLink: e.target.value }))}
                                         placeholder="https://t.me/example or @username"
                                         className="w-full py-4 pl-12 pr-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-purple-600/50 outline-none transition-all text-gray-800 font-bold text-sm shadow-inner"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* WhatsApp Support */}
+                        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
+                                    <img src="/whatsap.jpg" alt="WhatsApp" className="w-8 h-8 object-contain rounded-lg" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-gray-900 leading-none mb-1">WhatsApp Support</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Instant Message</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WhatsApp Phone Number</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">+</div>
+                                    <input
+                                        type="text"
+                                        value={settings.whatsappNumber}
+                                        onChange={(e) => setSettings(prev => ({ ...prev, whatsappNumber: e.target.value.replace(/[^0-9]/g, '') }))}
+                                        placeholder="251904174741"
+                                        className="w-full py-4 pl-8 pr-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-green-600/50 outline-none transition-all text-gray-800 font-bold text-sm shadow-inner"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* IMO Support */}
+                        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600">
+                                    <img src="/imo.jpg" alt="IMO" className="w-8 h-8 object-contain rounded-lg" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-gray-900 leading-none mb-1">IMO Support</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Messenger Support</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IMO Phone Number</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">+</div>
+                                    <input
+                                        type="text"
+                                        value={settings.imoNumber}
+                                        onChange={(e) => setSettings(prev => ({ ...prev, imoNumber: e.target.value.replace(/[^0-9]/g, '') }))}
+                                        placeholder="251904174741"
+                                        className="w-full py-4 pl-8 pr-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-yellow-600/50 outline-none transition-all text-gray-800 font-bold text-sm shadow-inner"
                                     />
                                 </div>
                             </div>

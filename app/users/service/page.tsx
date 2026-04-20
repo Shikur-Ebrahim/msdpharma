@@ -14,7 +14,9 @@ export default function ServicePage() {
     const [loading, setLoading] = useState(true);
     const [links, setLinks] = useState({
         channelLink: "",
-        teamLink: ""
+        teamLink: "",
+        imoNumber: "",
+        whatsappNumber: ""
     });
     const [lang, setLang] = useState<Language>("EN");
     const t = translations[lang];
@@ -39,7 +41,9 @@ export default function ServicePage() {
                 if (docSnap.exists()) {
                     setLinks({
                         channelLink: docSnap.data().channelLink || "",
-                        teamLink: docSnap.data().teamLink || ""
+                        teamLink: docSnap.data().teamLink || "",
+                        imoNumber: docSnap.data().imoNumber || "",
+                        whatsappNumber: docSnap.data().whatsappNumber || ""
                     });
                 }
             } catch (error) {
@@ -63,16 +67,30 @@ export default function ServicePage() {
         {
             title: t.supportTeamTitle,
             description: t.supportTeamDesc,
-            image: "/telegram.jpg",
+            image: "/telegram team.jpg",
             link: formatTG(links.teamLink),
             color: "blue"
+        },
+        {
+            title: t.whatsappSupportTitle,
+            description: t.whatsappSupportDesc,
+            image: "/whatsap.jpg",
+            link: links.whatsappNumber ? `whatsapp://send?phone=${links.whatsappNumber}` : "#",
+            color: "green"
+        },
+        {
+            title: t.imoSupportTitle,
+            description: t.imoSupportDesc,
+            image: "/imo.jpg",
+            link: links.imoNumber ? `imo://${links.imoNumber}` : "#",
+            color: "yellow"
         },
         {
             title: t.officialChannelTitle,
             description: t.officialChannelDesc,
             image: "/telegram.jpg",
             link: formatTG(links.channelLink),
-            color: "green"
+            color: "blue"
         }
     ];
 
