@@ -15,7 +15,6 @@ export default function ServicePage() {
     const [links, setLinks] = useState({
         channelLink: "",
         teamLink: "",
-        imoNumber: "",
         whatsappNumber: ""
     });
     const [lang, setLang] = useState<Language>("EN");
@@ -42,7 +41,6 @@ export default function ServicePage() {
                     setLinks({
                         channelLink: docSnap.data().channelLink || "",
                         teamLink: docSnap.data().teamLink || "",
-                        imoNumber: docSnap.data().imoNumber || "",
                         whatsappNumber: docSnap.data().whatsappNumber || ""
                     });
                 }
@@ -77,13 +75,6 @@ export default function ServicePage() {
             image: "/whatsap.jpg",
             link: links.whatsappNumber ? `whatsapp://send?phone=${links.whatsappNumber}` : "#",
             color: "green"
-        },
-        {
-            title: t.imoSupportTitle,
-            description: t.imoSupportDesc,
-            image: "/imo.jpg",
-            link: links.imoNumber ? `imo://${links.imoNumber}` : "#",
-            color: "yellow"
         },
         {
             title: t.officialChannelTitle,
