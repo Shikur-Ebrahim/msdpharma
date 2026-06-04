@@ -20,7 +20,12 @@ import {
     ArrowRight
 } from "lucide-react";
 import { translations, Language } from "@/lib/translations";
-
+import {
+    normalizeWithdrawalSettings,
+    isWithdrawalOpen,
+    getWithdrawalClosedMessage,
+    formatScheduleTime,
+} from "@/lib/withdrawalSchedule";
 
 const DAYS_MAP: Record<number, string> = {
     1: "Mon",
@@ -64,6 +69,7 @@ export default function WithdrawalPage() {
 
     // Error Modal State
     const [errorModal, setErrorModal] = useState<{ show: boolean, message: string } | null>(null);
+    const [withdrawalRuleMessage, setWithdrawalRuleMessage] = useState<string | null>(null);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -89,9 +95,9 @@ export default function WithdrawalPage() {
 
             // Fetch Global Withdrawal Settings
             const settingsRef = doc(db, "GlobalSettings", "withdrawal");
-            const unsubscribeSettings = onSnapshot(settingsRef, (doc) => {
-                if (doc.exists()) {
-                    setWithdrawalSettings(doc.data());
+            const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    setWithdrawalSettings(normalizeWithdrawalSettings(docSnap.data()));
                 }
                 setLoading(false);
             });
@@ -111,12 +117,14 @@ export default function WithdrawalPage() {
 
                     if (applicableRule) {
                         const ruleData = applicableRule.data();
-                        setErrorModal({
-                            show: true,
-                            message: ruleData.message || t.pleaseWaitUntil.replace("{time}", "")
-                        });
-
+                        setWithdrawalRuleMessage(
+                            ruleData.message || t.pleaseWaitUntil.replace("{time}", "")
+                        );
+                    } else {
+                        setWithdrawalRuleMessage(null);
                     }
+                } else {
+                    setWithdrawalRuleMessage(null);
                 }
             });
 
@@ -131,17 +139,22 @@ export default function WithdrawalPage() {
         return () => unsubscribeAuth();
     }, [router]);
 
-    const formatEthTime = (timeStr: string) => {
-        if (!timeStr) return "";
-        const [h, m] = timeStr.split(":").map(Number);
-        // Ethiopian time = (Server Time - 6) mod 12 (roughly, for 12hr display, but user wants HH:mm)
-        // User explicitly asked for 08:00 -> 2:00 and 17:00 -> 11:00
-        let ethH = h - 6;
-        if (ethH <= 0) ethH += 12; // Simple shift for this range
-        return `${String(ethH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const scheduleLabels = {
+        opensAt: t.opensAt,
+        opensAtTomorrow: t.opensAtTomorrow,
+        opensTodayAt: t.opensTodayAt,
+        opensOnDayAt: t.opensOnDayAt,
+        pleaseWaitUntil: t.pleaseWaitUntil,
+        availableUntil: t.availableUntil,
+        closed: t.closed,
+        active: t.active,
     };
 
     const handleWithdrawClick = () => {
+        if (withdrawalRuleMessage) {
+            setErrorModal({ show: true, message: withdrawalRuleMessage });
+            return;
+        }
         const numAmount = Number(amount);
         const balance = userData?.balance || 0;
 
@@ -169,24 +182,11 @@ export default function WithdrawalPage() {
         }
 
 
-        // Check Schedule
-        const now = new Date();
-        const currentDay = now.getDay();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
-
-        const [startH, startM] = (withdrawalSettings.startTime || "09:00").split(":").map(Number);
-        const [endH, endM] = (withdrawalSettings.endTime || "17:00").split(":").map(Number);
-        const startTotal = startH * 60 + startM;
-        const endTotal = endH * 60 + endM;
-
-        if (!withdrawalSettings.activeDays.includes(currentDay)) {
-            setErrorModal({ show: true, message: t.noProductsActive });
-            return;
-        }
-
-
-        if (currentTime < startTotal || currentTime > endTotal) {
-            setErrorModal({ show: true, message: t.pleaseWaitUntil.replace("{time}", formatEthTime(withdrawalSettings.startTime)) });
+        if (!isWithdrawalOpen(withdrawalSettings)) {
+            setErrorModal({
+                show: true,
+                message: getWithdrawalClosedMessage(withdrawalSettings, scheduleLabels, DAYS_MAP),
+            });
             return;
         }
 
@@ -272,18 +272,9 @@ export default function WithdrawalPage() {
                 {/* Withdrawal Schedule Status */}
                 <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                     {(() => {
-                        const now = new Date();
-                        const currentDay = now.getDay();
-                        const currentTime = now.getHours() * 60 + now.getMinutes();
-                        const [startH, startM] = (withdrawalSettings.startTime || "09:00").split(":").map(Number);
-                        const [endH, endM] = (withdrawalSettings.endTime || "17:00").split(":").map(Number);
-                        const startTotal = startH * 60 + startM;
-                        const endTotal = endH * 60 + endM;
+                        const open = isWithdrawalOpen(withdrawalSettings);
 
-                        const isOpenToday = withdrawalSettings.activeDays.includes(currentDay);
-                        const isWithinHours = currentTime >= startTotal && currentTime <= endTotal;
-
-                        if (!isOpenToday || !isWithinHours) {
+                        if (!open) {
                             return (
                                 <div className="bg-white border border-red-100 rounded-[3rem] p-8 flex items-center gap-6 shadow-xl shadow-red-900/5">
                                     <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
@@ -292,7 +283,7 @@ export default function WithdrawalPage() {
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-red-500 mb-1">{t.closed}</p>
                                         <p className="text-base font-bold text-blue-900">
-                                            {t.opensAtTomorrow.replace("{time}", formatEthTime(withdrawalSettings.startTime))}
+                                            {getWithdrawalClosedMessage(withdrawalSettings, scheduleLabels, DAYS_MAP)}
                                         </p>
                                     </div>
 
@@ -307,7 +298,7 @@ export default function WithdrawalPage() {
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-green-600 mb-1">{t.active}</p>
                                     <p className="text-base font-bold text-blue-900">
-                                        {t.availableUntil.replace("{time}", formatEthTime(withdrawalSettings.endTime))}
+                                        {t.availableUntil.replace("{time}", formatScheduleTime(withdrawalSettings.endTime))}
                                     </p>
                                 </div>
 
@@ -465,7 +456,7 @@ export default function WithdrawalPage() {
 
                     <ul className="space-y-8">
                         {[
-                            `${t.hospitalHours}: ${formatEthTime(withdrawalSettings.startTime)} - ${formatEthTime(withdrawalSettings.endTime)} (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
+                            `${t.hospitalHours}: ${formatScheduleTime(withdrawalSettings.startTime)} - ${formatScheduleTime(withdrawalSettings.endTime)} (EAT) (${withdrawalSettings.activeDays.map((d: number) => DAYS_MAP[d]).join(", ")})`,
                             `${t.dosageLimits}: ${withdrawalSettings.minAmount} - ${withdrawalSettings.maxAmount.toLocaleString()} ETB per request`,
                             `${t.oneRefundPer.replace("{days}", String(withdrawalSettings.frequency))}`,
                             t.processingTimeDesc

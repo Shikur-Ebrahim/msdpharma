@@ -24,6 +24,22 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { translations, Language } from "@/lib/translations";
+import {
+    normalizeWithdrawalSettings,
+    isWithdrawalOpen,
+    getWithdrawalClosedMessage,
+    getEthiopiaStartOfDay,
+} from "@/lib/withdrawalSchedule";
+
+const DAYS_MAP: Record<number, string> = {
+    1: "Mon",
+    2: "Tue",
+    3: "Wed",
+    4: "Thu",
+    5: "Fri",
+    6: "Sat",
+    0: "Sun",
+};
 
 interface WeekendOrder {
     id: string;
@@ -103,7 +119,7 @@ function SecurityContent() {
                 const withdrawRef = doc(db, "GlobalSettings", "withdrawal");
                 const withdrawSnap = await getDoc(withdrawRef);
                 if (withdrawSnap.exists()) {
-                    setWithdrawalSettings(withdrawSnap.data());
+                    setWithdrawalSettings(normalizeWithdrawalSettings(withdrawSnap.data()));
                 }
             } catch (error) {
                 console.error("Error fetching settings:", error);
@@ -210,9 +226,9 @@ function SecurityContent() {
 
     const checkRestriction = async () => {
         if (!user) return false;
-        const now = new Date();
         const f = withdrawalSettings.frequency || 1;
-        const checkStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (f - 1));
+        const eatToday = getEthiopiaStartOfDay();
+        const checkStartDate = new Date(eatToday.getTime() - (f - 1) * 24 * 60 * 60 * 1000);
         const q = query(
             collection(db, "WeekendWithdrawals"),
             where("userId", "==", user.uid)
@@ -247,10 +263,9 @@ function SecurityContent() {
         let timer: NodeJS.Timeout;
         if (isRestricted) {
             timer = setInterval(() => {
-                const now = new Date();
-                const targetReset = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-                targetReset.setHours(0, 0, 0, 0);
-                const diff = targetReset.getTime() - now.getTime();
+                const eatToday = getEthiopiaStartOfDay();
+                const targetReset = new Date(eatToday.getTime() + 24 * 60 * 60 * 1000);
+                const diff = targetReset.getTime() - Date.now();
                 if (diff <= 0) {
                     setIsRestricted(false);
                     return;
@@ -268,6 +283,24 @@ function SecurityContent() {
 
     const executeWithdrawal = async () => {
         try {
+            if (!isWithdrawalOpen(withdrawalSettings)) {
+                const scheduleLabels = {
+                    opensAt: t.opensAt,
+                    opensAtTomorrow: t.opensAtTomorrow,
+                    opensTodayAt: t.opensTodayAt,
+                    opensOnDayAt: t.opensOnDayAt,
+                    pleaseWaitUntil: t.pleaseWaitUntil,
+                    availableUntil: t.availableUntil,
+                    closed: t.closed,
+                    active: t.active,
+                };
+                toast.error(
+                    getWithdrawalClosedMessage(withdrawalSettings, scheduleLabels, DAYS_MAP)
+                );
+                setVerifying(false);
+                return;
+            }
+
             const amount = Number(amountParam);
             const fee = amount * 0.05;
             const actualReceipt = amount - fee;

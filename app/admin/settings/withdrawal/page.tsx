@@ -93,6 +93,7 @@ export default function WithdrawalSettingsPage() {
         try {
             await setDoc(doc(db, "GlobalSettings", "withdrawal"), {
                 ...settings,
+                activeDays: settings.activeDays.map((d) => Number(d)),
                 updatedAt: new Date().toISOString()
             }, { merge: true });
             toast.success("Withdrawal settings updated successfully");
