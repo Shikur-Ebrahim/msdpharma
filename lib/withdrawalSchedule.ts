@@ -31,10 +31,18 @@ export function normalizeActiveDays(activeDays: unknown): number[] {
     return normalized.length > 0 ? normalized : [...DEFAULT_ACTIVE_DAYS];
 }
 
+export type NormalizedWithdrawalSettings = WithdrawalScheduleSettings & {
+    activeDays: number[];
+    startTime: string;
+    endTime: string;
+    minAmount: number;
+    maxAmount: number;
+    frequency: number;
+};
+
 export function normalizeWithdrawalSettings(
     raw: WithdrawalScheduleSettings | null | undefined
-): Required<Pick<WithdrawalScheduleSettings, "activeDays" | "startTime" | "endTime">> &
-    WithdrawalScheduleSettings {
+): NormalizedWithdrawalSettings {
     return {
         minAmount: raw?.minAmount ?? 300,
         maxAmount: raw?.maxAmount ?? 40000,
